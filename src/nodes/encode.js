@@ -22,14 +22,14 @@ module.exports = function (RED) {
             }
             catch (error) {
                 node.warn(`
-Problem while looking up the message type.
-${error}
-Protofile object:
-${node.protofile.protopath}
-Prototypes content:
-${JSON.stringify(node.protofile.protoTypes)}
-With configured protoType:
-${msg.protobufType}
+                    Problem while looking up the message type.
+                    ${error}
+                    Protofile object:
+                    ${node.protofile.protopath}
+                    Prototypes content:
+                    ${JSON.stringify(node.protofile.protoTypes)}
+                    With configured protoType:
+                    ${msg.protobufType}
                 `);
                 return node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
             }

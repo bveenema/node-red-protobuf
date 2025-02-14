@@ -36,19 +36,39 @@ This node depends on protobufjs as the main package and will install it along wi
 
 ## Contribution
 
-To setup your local development environment first clone this repository, then use a container runtime to get your node-red environment up and running like this:
+To setup your local development environment first clone this repository, then use a container runtime to get your node-red environment up and running.
 
+Using Podman:
 ```bash
-podman run -p 1880:1880 -v $(pwd):/tmp/node-red-contrib-protobuf -d --name nodered nodered/node-red
+podman run -p 1880:1880 -v $(pwd):/tmp/node-red-contrib-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
+```
+
+Or using Docker:
+```bash
+# For Linux/Mac:
+docker run -p 1880:1880 -v "$(pwd)":/tmp/node-red-contrib-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
+
+# For Windows PowerShell:
+docker run -p 1880:1880 -v ${PWD}:/tmp/node-red-contrib-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
 ```
 
 After you saved your changes to the code update the installation within the container with this command:
 
+For Podman:
 ```bash
-podman exec -it nodered npm install /tmp/node-red-contrib-protobuf/ && podman restart nodered
+podman exec -it nodered-contrib-protobuf_plus npm install /tmp/node-red-contrib-protobuf/ && podman restart nodered-contrib-protobuf_plus
 ```
 
-*Note on SELinux enabled machines it's necessary to allow containers access to your working directory like this: `chcon -t container_file_t $(pwd)`*
+For Docker:
+```bash
+# For Linux/Mac:
+docker exec -it nodered-contrib-protobuf_plus npm install /tmp/node-red-contrib-protobuf/ && docker restart nodered-contrib-protobuf_plus
+
+# For Windows PowerShell:
+docker exec -it nodered-contrib-protobuf_plus npm install /tmp/node-red-contrib-protobuf/; docker restart nodered-contrib-protobuf_plus 
+```
+
+*Note: On SELinux enabled machines it's necessary to allow containers access to your working directory like this: `chcon -t container_file_t $(pwd)`*
 
 ### Testing and Coverage-Report
 

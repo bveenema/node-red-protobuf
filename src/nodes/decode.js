@@ -1,7 +1,7 @@
-protobufjs = require('protobufjs');
+const protobufjs = require('protobufjs');
 
-module.exports = function (RED) {
-    function ProtobufDecodeNode (config) {
+module.exports = function(RED) {
+    function ProtobufDecodeNode(config) {
         RED.nodes.createNode(this, config);
         // Retrieve the config node
         this.protofile = RED.nodes.getNode(config.protofile);
@@ -25,14 +25,14 @@ module.exports = function (RED) {
             }
             catch (error) {
                 node.warn(`
-Problem while looking up the message type.
-${error}
-Protofile object:
-${node.protofile.protopath}
-Prototypes content:
-${JSON.stringify(node.protofile.protoTypes)}
-With configured protoType:
-${msg.protobufType}
+                    Problem while looking up the message type.
+                    ${error}
+                    Protofile object:
+                    ${node.protofile.protopath}
+                    Prototypes content:
+                    ${JSON.stringify(node.protofile.protoTypes)}
+                    With configured protoType:
+                    ${msg.protobufType}
                 `);
                 node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
             }
@@ -69,5 +69,9 @@ ${msg.protobufType}
             node.send(msg);
         });
     }
+
     RED.nodes.registerType('decode', ProtobufDecodeNode);
+    
+    // Export ProtobufDecodeNode for testing purposes
+    module.exports.ProtobufDecodeNode = ProtobufDecodeNode;
 };
