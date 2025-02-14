@@ -62,7 +62,7 @@ module.exports = function(RED) {
                 longs: String,
                 enums: String,
                 bytes: String,
-                defaults: false, // includes default values, otherwise not transmitted values will be assigned their default value!
+                defaults: true, // we want untransmitted values to be included so that we know when booleans are false
             };
             msg.payload = messageType.toObject(message, decodeOptions);
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});
