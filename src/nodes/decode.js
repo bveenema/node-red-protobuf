@@ -1,4 +1,5 @@
 const protobufjs = require('protobufjs');
+const Long = protobufjs.util.Long;
 
 module.exports = function(RED) {
     function ProtobufDecodeNode(config) {
@@ -44,7 +45,7 @@ module.exports = function(RED) {
             if (!messageType) return;
             let message;
             try {
-                message = messageType.decode(msg.payload);
+                message = config.messageDelimited ? messageType.decodeDelimited(msg.payload) : messageType.decode(msg.payload);
             }
             catch (exception) {
                 if (exception instanceof protobufjs.util.ProtocolError) {
@@ -58,11 +59,22 @@ module.exports = function(RED) {
                     return node.status({fill: 'yellow', shape: 'dot', text: 'Wire format invalid'});
                 }
             }
+            
+            // Convert string config values to their corresponding types
             let decodeOptions = {
-                longs: String,
-                enums: String,
-                bytes: String,
-                defaults: true, // we want untransmitted values to be included so that we know when booleans are false
+                longs: config.decodeLongs === "String" ? String :
+                       config.decodeLongs === "Number" ? Number : 
+                       config.decodeLongs === "Long" ? Long : String,
+                enums: config.decodeEnums === "String" ? String :
+                       config.decodeEnums === "Number" ? Number : String,
+                bytes: config.decodeBytes === "String" ? String :
+                       config.decodeBytes === "Array" ? Array :
+                       config.decodeBytes === "Buffer" ? Buffer : String,
+                defaults: config.decodeDefaults,
+                arrays: config.decodeArrays,
+                objects: config.decodeObjects,
+                oneofs: config.decodeOneofs,
+                json: config.decodeJson
             };
             msg.payload = messageType.toObject(message, decodeOptions);
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});

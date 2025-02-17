@@ -6,6 +6,15 @@
             name: { value: "" },
             protofile: { value: "", type: "protobuf-file" },
             protoType: { value: "" },
+            messageDelimited: { value: true },
+            decodeEnums: { value: "String" },
+            decodeLongs: { value: "String" },
+            decodeBytes: { value: "String" },
+            decodeDefaults: { value: true },
+            decodeArrays: { value: false },
+            decodeObjects: { value: false },
+            decodeOneofs: { value: false },
+            decodeJson: { value: false },
         },
         inputs: 1,
         outputs: 1,
@@ -28,6 +37,64 @@
     <div class="form-row">
         <label for="node-input-protoType"><i class="icon-tag"></i> Type</label>
         <input type="text" id="node-input-protoType" placeholder="Proto Message Type">
+    </div>
+
+    <!-- Message Format -->
+    <h4>Message Format</h4>
+    <div class="form-row">
+        <label>Delimited</label>
+        <input type="checkbox" id="node-input-messageDelimited" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+
+    <!-- Decode Options -->
+    <h4>Output Format</h4>
+
+    <!-- Dropdown options -->
+    <div class="form-row">
+        <label for="node-input-decodeEnums">Enums</label>
+        <select id="node-input-decodeEnums">
+            <option value="String">String</option>
+            <option value="Number">Number</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-decodeLongs">Longs (64-bit)</label>
+        <select id="node-input-decodeLongs">
+            <option value="String">String</option>
+            <option value="Number">Number</option>
+            <option value="Long">Long Object</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-decodeBytes">Bytes</label>
+        <select id="node-input-decodeBytes">
+            <option value="String">String</option>
+            <option value="Array">Array</option>
+            <option value="Buffer">Buffer</option>
+        </select>
+    </div>
+    
+    <!-- Checkbox options -->
+    <h4>Show Options</h4>
+    <div class="form-row">
+        <label>Defaults</label>
+        <input type="checkbox" id="node-input-decodeDefaults" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row">
+        <label>Empty Arrays</label>
+        <input type="checkbox" id="node-input-decodeArrays" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row">
+        <label>Empty Objects</label>
+        <input type="checkbox" id="node-input-decodeObjects" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row">
+        <label>Virtual Oneofs</label>
+        <input type="checkbox" id="node-input-decodeOneofs" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row">
+        <label>Safe JSON</label>
+        <input type="checkbox" id="node-input-decodeJson" style="display: inline-block; width: auto; vertical-align: top;">
     </div>
 </script>
 
