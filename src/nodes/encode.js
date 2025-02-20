@@ -33,12 +33,23 @@ module.exports = function (RED) {
                 `);
                 return node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
             }
-            if (messageType.verify(msg.payload)) {
+            // create a protobuf message and convert it into a buffer
+            const message = config.flexibleInput
+                ? messageType.fromObject(msg.payload)
+                : messageType.create(msg.payload);
+            
+            if (messageType.verify(message)) {
                 node.warn('Message is not valid under selected message type.');
                 return node.status({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
             }
-            // create a protobuf message and convert it into a buffer
-            msg.payload = messageType.encode(messageType.create(msg.payload)).finish();
+
+            msg.payload = (
+              config.messageDelimited
+                ? messageType.encodeDelimited(message)
+                : messageType.encode(message)
+            ).finish();
+            // convert the buffer to a string of hex values
+            msg.protobufString = Array.from(msg.payload).map(b => b.toString(16).padStart(2, '0')).join('');
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});
             node.send(msg);
         });

@@ -3,16 +3,11 @@
         category: 'protobuf',
         color: '#C0DEED',
         defaults: {
-            name: {
-                value: ""
-            },
-            protofile: {
-                value: "",
-                type: "protobuf-file"
-            },
-            protoType: {
-                value: ""
-            },
+            name: { value: "" },
+            protofile: { value: "", type: "protobuf-file" },
+            protoType: { value: "" },
+            messageDelimited: { value: true },
+            flexibleInput: { value: false }
         },
         inputs: 1,
         outputs: 1,
@@ -38,6 +33,18 @@
         <label for="node-input-protoType">
             <i class="icon-tag"></i> Type</label>
         <input type="text" id="node-input-protoType" placeholder="Proto Message Type">
+    </div>
+
+    <h4>Message Format</h4>
+    <div class="form-row">
+        <label for="node-input-messageDelimited">Delimited</label>
+        <input type="checkbox" id="node-input-messageDelimited" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+
+    <h4>Input Format</h4>
+    <div class="form-row">
+        <label for="node-input-flexibleInput">Flexible Input</label>
+        <input type="checkbox" id="node-input-flexibleInput" style="display: inline-block; width: auto; vertical-align: top;">
     </div>
 </script>
 
