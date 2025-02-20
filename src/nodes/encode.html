@@ -79,8 +79,29 @@
         <dd>
             the identifier string of the corresponding protobuf type definition of the message
         </dd>
+        <dt>protobufString
+            <span class="property-type">string</span>
+        </dt>
+        <dd>
+            a hexadecimal string representation of the encoded buffer
+        </dd>
     </dl>
     <h3>Details</h3>
     <p>When supplied with a protobuf type from the protofile the node will encode the message with protobufjs defaults into a binary buffer object.</p>
     <p>The protobufType from a message always takes precedence over the node defined type.</p>
+    
+    <h4>Message Format Options</h4>
+    <p><b>Delimited</b> - When enabled, the message will be encoded with length-delimited format. This is useful when streaming multiple messages or when the message size needs to be known upfront.</p>
+    
+    <h4>Input Format Options</h4>
+    <p><b>Flexible Input</b> - When enabled, the node will be more lenient with input validation:
+        <ul>
+            <li>Accepts partial objects (missing fields will use defaults)</li>
+            <li>Converts compatible types automatically</li>
+            <li>Ignores unknown fields</li>
+        </ul>
+        When disabled (strict mode), the input must exactly match the protobuf type definition.
+        <br><br>
+        <i>Note: Flexible input requires additional computation for type conversion and validation. For maximum performance, disable this option if your input data already matches the protobuf schema exactly.</i>
+    </p>
 </script>

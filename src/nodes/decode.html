@@ -121,39 +121,70 @@
 
 <script type="text/x-red" data-help-name="decode">
     <p>Select a proto type definition from a proto file to decode incoming messages.</p>
+    
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt>payload
             <span class="property-type">buffer</span>
         </dt>
         <dd>
-            a buffer binary message containing the protobuf encoded message.
+            A buffer binary message containing the protobuf encoded message. In stream mode, this should be a single-byte buffer.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
         </dt>
         <dd>
-            the identifier string of the corresponding protobuf type definition of the message.
+            The identifier string of the corresponding protobuf type definition of the message. Optional if configured in the node.
         </dd>
     </dl>
+
     <h3>Outputs</h3>
     <dl class="message-properties">
         <dt>payload
             <span class="property-type">object</span>
         </dt>
         <dd>
-            a javascript object containing the protobuf decoded message fields.
+            A javascript object containing the protobuf decoded message fields.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
         </dt>
         <dd>
-            the identifier string of the corresponding protobuf type definition of the message
+            The identifier string of the corresponding protobuf type definition of the message.
         </dd>
     </dl>
+
     <h3>Details</h3>
-    <p>When supplied with a protobuf type from the protofile the node will decode the message into a javascript object.</p>
-    <p>The protobufType from a message always takes precedence over the node defined type.</p>
-    <p>The current settings are set such that longs, enums and strings are decoded into string and default values are not taken into account.</p>
-    <p>If a message is incomplete regarding the protobuf type all fields that can be decoded will be decoded resulting in a partial decoded message at the output.</p>
+    <p>This node decodes protobuf messages into JavaScript objects using a specified message type definition.</p>
+
+    <h4>Message Format</h4>
+    <ul>
+        <li><b>Delimited</b> - Enable if messages are length-delimited (prefixed with their length). Required for streaming multiple messages.</li>
+        <li><b>Stream Input</b> - Enable to process input one byte at a time. Useful for serial data or partial message reception.</li>
+        <li><b>Timeout</b> - When using non-delimited stream input, specifies how long (in milliseconds) to wait for more bytes before processing the message.</li>
+    </ul>
+
+    <h4>Output Format Options</h4>
+    <ul>
+        <li><b>Enums</b> - Choose whether to output enum values as strings or numbers</li>
+        <li><b>Longs</b> - Choose how to represent 64-bit integers (as strings, numbers, or Long objects)</li>
+        <li><b>Bytes</b> - Choose how to represent byte fields (as strings, arrays, or buffers)</li>
+    </ul>
+
+    <h4>Show Options</h4>
+    <ul>
+        <li><b>Defaults</b> - Include default values in the output object</li>
+        <li><b>Empty Arrays</b> - Include empty arrays in the output</li>
+        <li><b>Empty Objects</b> - Include empty objects in the output</li>
+        <li><b>Virtual Oneofs</b> - Include virtual oneof properties in the output</li>
+        <li><b>Safe JSON</b> - Ensure output can be safely converted to JSON</li>
+    </ul>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>The protobufType from a message always takes precedence over the node's configured type.</li>
+        <li>If a message is incomplete, all fields that can be decoded will be included in a partial output message.</li>
+        <li>When using stream input without delimited messages, the timeout determines when to process accumulated bytes.</li>
+        <li>For serial data or protocols that send one byte at a time, enable stream input and configure an appropriate timeout.</li>
+    </ul>
 </script>

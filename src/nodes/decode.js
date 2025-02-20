@@ -71,8 +71,6 @@ module.exports = function(RED) {
         let processCompleteMessage = function(completeMessage, lengthBytes = null) {
             let msg = createMessageObject(completeMessage, lengthBytes);
             
-            node.warn("Decoding message: " + Array.from(completeMessage).map(b => b.toString(16).padStart(2, '0')).join(''));
-            
             let messageType = resolveMessageType(msg);
             if (!messageType) return;
             
@@ -205,10 +203,7 @@ module.exports = function(RED) {
                 if (result) {
                     // We have a complete message to decode
                     msg.payload = result.payload;
-                    msg.proto = result.proto;
 
-                    node.warn("Decoding message: " + Array.from(msg.payload).map(b => b.toString(16).padStart(2, '0')).join(''));
-                    
                     let messageType = resolveMessageType(msg);
                     if (!messageType) return;
                     
