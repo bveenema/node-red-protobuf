@@ -9,6 +9,15 @@ module.exports = function(RED) {
         this.protoType = config.protoType;
         var node = this;
 
+        // Add stream handling state
+        this.messageBytes = [];
+        this.lengthBytes = [];
+        this.expectedLength = null;
+
+        // Add timeout handle
+        this.streamTimeout = null;
+        this.streamTimeoutDuration = config.streamTimeout || 100; // Use configured value or default to 100ms
+
         let resolveMessageType = function (msg) {
             msg.protobufType = msg.protobufType || node.protoType;
             if (msg.protobufType === undefined) {
@@ -40,28 +49,97 @@ module.exports = function(RED) {
             return messageType;
         };
 
-        node.on('input', function (msg) {
+        let createMessageObject = function(completeMessage, lengthBytes = null) {
+            return {
+                payload: config.messageDelimited && lengthBytes ? 
+                    Buffer.concat([Buffer.from(lengthBytes), completeMessage]) : 
+                    completeMessage,
+                proto: {
+                    msg: completeMessage.toString('hex'),
+                    ...(lengthBytes && { msgDelimited: Buffer.from(lengthBytes).toString('hex') + completeMessage.toString('hex') }),
+                    length: completeMessage.length
+                }
+            };
+        };
+
+        let resetMessageState = function() {
+            node.messageBytes = [];
+            node.lengthBytes = [];
+            node.expectedLength = null;
+        };
+
+        let processCompleteMessage = function(completeMessage, lengthBytes = null) {
+            let msg = createMessageObject(completeMessage, lengthBytes);
+            
+            node.warn("Decoding message: " + Array.from(completeMessage).map(b => b.toString(16).padStart(2, '0')).join(''));
+            
             let messageType = resolveMessageType(msg);
             if (!messageType) return;
-            let message;
-            try {
-                message = config.messageDelimited ? messageType.decodeDelimited(msg.payload) : messageType.decode(msg.payload);
+            
+            let decodedResult = decodeMessage(messageType, msg.payload, config.messageDelimited);
+            processDecodedMessage(messageType, decodedResult, msg);
+            
+            resetMessageState();
+        };
+
+        let processStreamByte = function(byte) {
+            // Clear any existing timeout
+            if (node.streamTimeout) {
+                clearTimeout(node.streamTimeout);
+                node.streamTimeout = null;
             }
-            catch (exception) {
-                if (exception instanceof protobufjs.util.ProtocolError) {
-                    node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
-                    node.status({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
-                    msg.payload = e.instance;
-                    node.send(msg);
+
+            if (config.messageDelimited) {
+                // If we don't have the full length yet
+                if (node.expectedLength === null) {
+                    node.lengthBytes.push(byte);
+                    
+                    // Check if this is the last length byte (MSB is 0)
+                    if ((byte & 0x80) === 0) {
+                        // Reconstruct the length from varint encoding
+                        let length = node.lengthBytes.reduce((acc, byte) => {
+                            return (acc << 7) | (byte & 0x7F);
+                        }, 0);
+                        
+                        if (length > 0) {
+                            node.expectedLength = length;
+                        } else {
+                            resetMessageState();
+                        }
+                    }
+                    return null;
                 }
-                else {
-                    node.warn(`Wire format is invalid: ${exception}`);
-                    return node.status({fill: 'yellow', shape: 'dot', text: 'Wire format invalid'});
+                
+                // Collecting message bytes
+                node.messageBytes.push(byte);
+                
+                // Check if we have a complete message
+                if (node.messageBytes.length === node.expectedLength) {
+                    let completeMessage = Buffer.from(node.messageBytes);
+                    let lengthBytes = [...node.lengthBytes];  // Save for debug info
+                    // Instead of processing here, return the message object to be processed by input handler
+                    let result = createMessageObject(completeMessage, lengthBytes);
+                    resetMessageState();
+                    return result;
                 }
+            } else {
+                // Non-delimited message handling
+                node.messageBytes.push(byte);
+                
+                // Set timeout to process message if no more bytes arrive
+                node.streamTimeout = setTimeout(() => {
+                    let completeMessage = Buffer.from(node.messageBytes);
+                    processCompleteMessage(completeMessage);
+                }, node.streamTimeoutDuration);
             }
             
-            // Convert string config values to their corresponding types
-            let decodeOptions = {
+            node.status({fill: 'blue', shape: 'dot', text: `Collecting bytes: ${node.messageBytes.length}`});
+            return null;
+        };
+
+        // Move decode options setup to a helper function
+        let getDecodeOptions = function() {
+            return {
                 longs: config.decodeLongs === "String" ? String :
                        config.decodeLongs === "Number" ? Number : 
                        config.decodeLongs === "Long" ? Long : String,
@@ -76,9 +154,89 @@ module.exports = function(RED) {
                 oneofs: config.decodeOneofs,
                 json: config.decodeJson
             };
-            msg.payload = messageType.toObject(message, decodeOptions);
+        };
+
+        // Move message decoding logic to a helper function
+        let decodeMessage = function(messageType, payload, isDelimited) {
+            let message;
+            try {
+                message = isDelimited ? messageType.decodeDelimited(payload) : messageType.decode(payload);
+            }
+            catch (exception) {
+                if (exception instanceof protobufjs.util.ProtocolError) {
+                    node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
+                    node.status({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
+                    return { error: 'incomplete', instance: exception.instance };
+                }
+                else {
+                    node.warn(`Wire format is invalid: ${exception}`);
+                    node.status({fill: 'yellow', shape: 'dot', text: 'Wire format invalid'});
+                    return { error: 'invalid' };
+                }
+            }
+            return { message };
+        };
+
+        // Move final message processing to a helper function
+        let processDecodedMessage = function(messageType, decodedResult, msg) {
+            if (decodedResult.error) {
+                if (decodedResult.error === 'incomplete') {
+                    msg.payload = decodedResult.instance;
+                    node.send(msg);
+                }
+                return false;
+            }
+
+            msg.payload = messageType.toObject(decodedResult.message, getDecodeOptions());
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});
             node.send(msg);
+            return true;
+        };
+
+        node.on('input', function(msg) {
+            if (config.streamInput) {
+                // Handle stream input - expect single byte
+                if (!Buffer.isBuffer(msg.payload) || msg.payload.length !== 1) {
+                    node.error('Stream input mode expects single byte buffers');
+                    return node.status({fill: 'red', shape: 'dot', text: 'Invalid stream input'});
+                }
+
+                let result = processStreamByte(msg.payload[0]);
+                if (result) {
+                    // We have a complete message to decode
+                    msg.payload = result.payload;
+                    msg.proto = result.proto;
+
+                    node.warn("Decoding message: " + Array.from(msg.payload).map(b => b.toString(16).padStart(2, '0')).join(''));
+                    
+                    let messageType = resolveMessageType(msg);
+                    if (!messageType) return;
+                    
+                    let decodedResult = decodeMessage(messageType, msg.payload, config.messageDelimited);
+                    processDecodedMessage(messageType, decodedResult, msg);
+                } else {
+                    // Still collecting bytes
+                    node.status({fill: 'blue', shape: 'dot', text: `Collecting bytes: ${node.messageBytes.length}`});
+                }
+            } else {
+                // Handle normal input
+                let messageType = resolveMessageType(msg);
+                if (!messageType) return;
+                
+                let decodedResult = decodeMessage(messageType, msg.payload, config.messageDelimited);
+                processDecodedMessage(messageType, decodedResult, msg);
+            }
+        });
+
+        // Clean up state when node is closed
+        node.on('close', function() {
+            if (node.streamTimeout) {
+                clearTimeout(node.streamTimeout);
+                node.streamTimeout = null;
+            }
+            node.messageBytes = [];
+            node.lengthBytes = [];
+            node.expectedLength = null;
         });
     }
 

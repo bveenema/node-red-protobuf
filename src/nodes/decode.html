@@ -7,6 +7,8 @@
             protofile: { value: "", type: "protobuf-file" },
             protoType: { value: "" },
             messageDelimited: { value: true },
+            streamInput: { value: false },
+            streamTimeout: { value: 100 },
             decodeEnums: { value: "String" },
             decodeLongs: { value: "String" },
             decodeBytes: { value: "String" },
@@ -21,6 +23,17 @@
         icon: "hash.png",
         label: function() {
             return this.name || "decode";
+        },
+        oneditprepare: function() {
+            var streamInput = $("#node-input-streamInput").is(":checked");
+            var messageDelimited = $("#node-input-messageDelimited").is(":checked");
+            $("#stream-timeout-row").toggle(streamInput && !messageDelimited);
+            
+            $("#node-input-streamInput, #node-input-messageDelimited").on("change", function() {
+                var streamInput = $("#node-input-streamInput").is(":checked");
+                var messageDelimited = $("#node-input-messageDelimited").is(":checked");
+                $("#stream-timeout-row").toggle(streamInput && !messageDelimited);
+            });
         }
     });
 </script>
@@ -44,6 +57,14 @@
     <div class="form-row">
         <label>Delimited</label>
         <input type="checkbox" id="node-input-messageDelimited" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row">
+        <label>Stream Input</label>
+        <input type="checkbox" id="node-input-streamInput" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-row" id="stream-timeout-row">
+        <label for="node-input-streamTimeout">Timeout (ms)</label>
+        <input type="number" id="node-input-streamTimeout" min="1" placeholder="100">
     </div>
 
     <!-- Decode Options -->
