@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/w4tsn/node-red-contrib-protobuf.git"
+    "url": "git+https://github.com/bveenema/node-red-protobuf.git"
   },
   "keywords": [
     "node-red",
@@ -23,7 +23,7 @@
   ],
   "license": "BSD-3",
   "bugs": {
-    "url": "https://github.com/bveenema/node-red-protobuf.git"
+    "url": "https://github.com/bveenema/node-red-protobuf/issues"
   },
   "homepage": "https://github.com/bveenema/node-red-protobuf",
   "node-red": {
@@ -43,5 +43,8 @@
   },
   "dependencies": {
     "protobufjs": "^7.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
