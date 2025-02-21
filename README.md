@@ -1,6 +1,13 @@
 # @bveenema/node-red-protobuf
 
 This project features protobuf encode/decode nodes. Load a proto file, supply a desired type for encoding or decoding and have fun.
+It is orignally based on the [node-red-contrib-protobuf](https://github.com/w4tsn/node-red-contrib-protobuf) project but has been enhanced with the following features:
+- Advanced Decoding and Encoding Options
+  - Include default values
+  - Specify type for Enums, Longs and Bytes
+  - Flexible encode for on-the-fly conversion including ability to specify enums by string
+- Stream Input Mode
+- Support for Delimited messages
 
 ## Installation
 
