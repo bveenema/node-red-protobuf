@@ -1,6 +1,4 @@
-# node-red-contrib-protobuf
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fw4tsn%2Fnode-red-contrib-protobuf.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fw4tsn%2Fnode-red-contrib-protobuf?ref=badge_shield)
-
+# @bveenema/node-red-protobuf
 
 This project features protobuf encode/decode nodes. Load a proto file, supply a desired type for encoding or decoding and have fun.
 
@@ -84,15 +82,11 @@ npm run lint
 
 The BSD 3-Clause License
 
-[Alexander Wellbrock](https://w4tsn.github.io/blog)
+## Contributors
+Forked and enhanced from original project [node-red-contrib-protobuf](https://github.com/w4tsn/node-red-contrib-protobuf) by [Alexander Wellbrock](https://w4tsn.github.io/blog)
 
-
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fw4tsn%2Fnode-red-contrib-protobuf.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fw4tsn%2Fnode-red-contrib-protobuf?ref=badge_large)
 
 ## Roadmap
 
-* validate type from loaded .proto files
-* allow `.proto`-path to be a URL
-* expose more configuration parameters from the protobufjs API
-* write tests covering misconfiguration and errors/exceptions
-* enhance the multi-file selection UI
+- Better file and type selection UI
+- Option to split fields into separate messages

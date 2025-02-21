@@ -1,7 +1,7 @@
 {
-  "name": "node-red-contrib-protobuf",
-  "version": "1.1.2",
-  "description": "Protocol buffer encode/decode nodes.",
+  "name": "@bveenema/node-red-protobuf",
+  "version": "2.0.0",
+  "description": "Enhanced protocol buffer encode/decode nodes.",
   "main": "src/index.js",
   "scripts": {
     "test": "mocha \"test/**/*spec.js\"",
@@ -17,12 +17,15 @@
     "node-red",
     "protobuf"
   ],
-  "author": "Alexander Wellbrock <a.wellbrock@mailbox.org>",
+  "author": "Ben Veenema",
+  "contributors": [
+    "Alexander Wellbrock <a.wellbrock@mailbox.org>"
+  ],
   "license": "BSD-3",
   "bugs": {
-    "url": "https://github.com/w4tsn/node-red-contrib-protobuf/issues"
+    "url": "https://github.com/bveenema/node-red-protobuf.git"
   },
-  "homepage": "https://github.com/w4tsn/node-red-contrib-protobuf#README",
+  "homepage": "https://github.com/bveenema/node-red-protobuf",
   "node-red": {
     "nodes": {
       "encode": "src/nodes/encode.js",
