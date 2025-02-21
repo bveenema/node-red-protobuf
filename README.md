@@ -1,7 +1,7 @@
 # @bveenema/node-red-protobuf
 
 This project features protobuf encode/decode nodes. Load a proto file, supply a desired type for encoding or decoding and have fun.
-It is orignally based on the [node-red-contrib-protobuf](https://github.com/w4tsn/node-red-contrib-protobuf) project but has been enhanced with the following features:
+It is originally based on the [node-red-contrib-protobuf](https://github.com/w4tsn/node-red-contrib-protobuf) project but has been enhanced with the following features:
 - Advanced Decoding and Encoding Options
   - Include default values
   - Specify type for Enums, Longs and Bytes
@@ -14,7 +14,7 @@ It is orignally based on the [node-red-contrib-protobuf](https://github.com/w4ts
 To install run
 
 ```bash
-npm install --production --save node-red-contrib-protobuf 
+npm install --production --save @bveenema/node-red-protobuf 
 ```
 
 Omit the `--production` flag, in order to install the development dependencies for testing and coverage. Omit `--save` if you don't want to add it to your package.json.
