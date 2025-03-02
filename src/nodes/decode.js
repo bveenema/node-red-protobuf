@@ -235,7 +235,7 @@ module.exports = function(RED) {
         });
     }
 
-    RED.nodes.registerType('decode', ProtobufDecodeNode);
+    RED.nodes.registerType('pb_decode', ProtobufDecodeNode);
     
     // Export ProtobufDecodeNode for testing purposes
     module.exports.ProtobufDecodeNode = ProtobufDecodeNode;

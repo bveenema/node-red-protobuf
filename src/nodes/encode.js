@@ -54,5 +54,5 @@ module.exports = function (RED) {
             node.send(msg);
         });
     }
-    RED.nodes.registerType('encode', ProtobufEncodeNode);
+    RED.nodes.registerType('pb_encode', ProtobufEncodeNode);
 };

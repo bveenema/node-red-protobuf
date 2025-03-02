@@ -1,5 +1,5 @@
 <script type="text/javascript">
-    RED.nodes.registerType('protobuf-file', {
+    RED.nodes.registerType('protobuf_file', {
         category: 'config',
         defaults: {
             protopath: { value: "", required: true },
@@ -13,7 +13,7 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="protobuf-file">
+<script type="text/x-red" data-template-name="protobuf_file">
     <div class="form-row">
         <label for="node-config-input-protopath"><i class="icon-file"></i> Path</label>
         <input type="text" id="node-config-input-protopath"/>
@@ -24,7 +24,7 @@
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="protobuf-file">
+<script type="text/x-red" data-help-name="protobuf_file">
     <p>Provide a path to a .proto definition file. If multiple files are needed (e.g. dependencies) then separate them with commas</p>
     <h3>Details</h3>
     <p>If the underlying .proto file changes the node will be notified and update the running copy. Currently only the first file in the list is watched due to performance reasons.</p>

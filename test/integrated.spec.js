@@ -47,7 +47,7 @@ const generateIntegratedFlow = function(protoFilePath, protoType, keepCase) {
         },
         {
             'id': 'c55e9eb5.3175',
-            'type': 'protobuf-file',
+            'type': 'protobuf_file',
             'z': '',
             'protopath': protoFilePath,
             'keepCase': keepCase || false

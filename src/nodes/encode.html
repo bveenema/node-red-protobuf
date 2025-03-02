@@ -1,10 +1,10 @@
 <script type="text/javascript">
-    RED.nodes.registerType('encode', {
+    RED.nodes.registerType('pb_encode', {
         category: 'protobuf',
         color: '#C0DEED',
         defaults: {
             name: { value: "" },
-            protofile: { value: "", type: "protobuf-file" },
+            protofile: { value: "", type: "protobuf_file" },
             protoType: { value: "" },
             messageDelimited: { value: true },
             flexibleInput: { value: false }
@@ -18,7 +18,7 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="encode">
+<script type="text/x-red" data-template-name="pb_encode">
     <div class="form-row">
         <label for="node-input-name">
             <i class="icon-tag"></i> Name</label>
@@ -48,7 +48,7 @@
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="encode">
+<script type="text/x-red" data-help-name="pb_encode">
     <p>Select a proto type definition from a proto file and encode incoming messages.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">

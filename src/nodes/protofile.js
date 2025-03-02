@@ -48,5 +48,5 @@ module.exports = function (RED) {
         protoFileNode.load();
         if (protoFileNode.protoTypes !== undefined && protoFileNode.watchFile) protoFileNode.watchFile();
     }
-    RED.nodes.registerType('protobuf-file', ProtoFileNode);
+    RED.nodes.registerType('protobuf_file', ProtoFileNode);
 };

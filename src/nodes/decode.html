@@ -1,10 +1,10 @@
 <script type="text/javascript">
-    RED.nodes.registerType('decode', {
+    RED.nodes.registerType('pb_decode', {
         category: 'protobuf',
         color: '#C0DEED',
         defaults: {
             name: { value: "" },
-            protofile: { value: "", type: "protobuf-file" },
+            protofile: { value: "", type: "protobuf_file" },
             protoType: { value: "" },
             messageDelimited: { value: true },
             streamInput: { value: false },
@@ -38,7 +38,7 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="decode">
+<script type="text/x-red" data-template-name="pb_decode">
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
@@ -119,7 +119,7 @@
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="decode">
+<script type="text/x-red" data-help-name="pb_decode">
     <p>Select a proto type definition from a proto file to decode incoming messages.</p>
     
     <h3>Inputs</h3>

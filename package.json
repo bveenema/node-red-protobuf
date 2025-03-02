@@ -1,6 +1,6 @@
 {
   "name": "@bveenema/node-red-protobuf",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Enhanced protocol buffer encode/decode nodes.",
   "main": "src/index.js",
   "scripts": {
@@ -26,11 +26,15 @@
     "url": "https://github.com/bveenema/node-red-protobuf/issues"
   },
   "homepage": "https://github.com/bveenema/node-red-protobuf",
+  "engines": {
+    "node": ">=12.0.0"
+  },
   "node-red": {
+    "version": ">=3.0.0",
     "nodes": {
-      "encode": "src/nodes/encode.js",
-      "decode": "src/nodes/decode.js",
-      "file": "src/nodes/protofile.js"
+      "pb_encode": "src/nodes/encode.js",
+      "pb_decode": "src/nodes/decode.js",
+      "protobuf_file": "src/nodes/protofile.js"
     }
   },
   "devDependencies": {
