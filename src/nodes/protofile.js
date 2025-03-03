@@ -126,7 +126,21 @@ module.exports = function (RED) {
         
         protoFileNode.load = function () {
             try {
-                protoFileNode.protoTypes = new Root().loadSync(protoFileNode.protopath, { keepCase: protoFileNode.keepCase });
+                // Create a new Root instance
+                protoFileNode.protoTypes = new Root();
+                
+                // If protopath is an array, load each file individually
+                if (Array.isArray(protoFileNode.protopath)) {
+                    // Load each proto file into the same root
+                    protoFileNode.protopath.forEach(path => {
+                        if (path.trim()) { // Skip empty paths
+                            protoFileNode.protoTypes.loadSync(path, { keepCase: protoFileNode.keepCase });
+                        }
+                    });
+                } else {
+                    // Load a single file
+                    protoFileNode.protoTypes.loadSync(protoFileNode.protopath, { keepCase: protoFileNode.keepCase });
+                }
                 
                 // Extract and store all message types
                 protoFileNode.types = getAllTypes(protoFileNode.protoTypes);
@@ -139,8 +153,9 @@ module.exports = function (RED) {
         
         protoFileNode.watchFile = function () {
             try {
-                // if it's an array, just watch the first one, it's most likely the one likely to change.
-                // As the subsequent files are more likely dependencies on the root.
+                // When multiple proto files are specified (as an array),
+                // we only watch the first file for changes to avoid excessive file watchers.
+                // The first file is typically the main proto file, with others being dependencies.
                 let watchedFile = protoFileNode.protopath;
                 if (Array.isArray(watchedFile)) {
                     watchedFile = watchedFile[0];

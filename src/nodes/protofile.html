@@ -439,6 +439,40 @@
         if (protopathInput) {
             protopathInput.value = paths.join(',');
         }
+        
+        // Show notification about deployment requirement
+        showDeployNotification();
+    }
+    
+    // Add notification that deployment is required to update types
+    function showDeployNotification() {
+        // Check if notification already exists
+        if (!document.getElementById('proto-deploy-notification')) {
+            const container = document.getElementById('file-browser-container');
+            const notification = document.createElement('div');
+            notification.id = 'proto-deploy-notification';
+            notification.style.cssText = 'margin-top: 10px; padding: 8px 15px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; color: #856404;';
+            notification.innerHTML = '<strong>Note:</strong> You must deploy your flow after changing proto files to update available message types in encoder/decoder nodes.';
+            container.appendChild(notification);
+            
+            // Remove the notification after 10 seconds
+            setTimeout(() => {
+                const note = document.getElementById('proto-deploy-notification');
+                if (note) {
+                    note.style.opacity = '1';
+                    // Fade out animation
+                    let opacity = 1;
+                    const timer = setInterval(() => {
+                        if (opacity <= 0.1) {
+                            clearInterval(timer);
+                            note.remove();
+                        }
+                        note.style.opacity = opacity;
+                        opacity -= 0.1;
+                    }, 50);
+                }
+            }, 10000);
+        }
     }
 </script>
 
@@ -466,13 +500,17 @@
 
 <script type="text/x-red" data-help-name="protobuf_file">
     <p>Provide paths to .proto definition files using the file browser. The browser shows files on the server/container filesystem.</p>
+    
+    <h3>Important Note</h3>
+    <p><strong>After changing proto file selections, you must deploy your flow</strong> for the changes to fully take effect. The list of message types available in encoder/decoder nodes will only update after deployment.</p>
+    
     <h3>Properties</h3>
     <dl class="message-properties">
         <dt>Name <span class="property-type">string</span></dt>
         <dd>Optional name to identify this proto file configuration in the encoder/decoder nodes. If not set, the filename of the first selected proto file will be used instead.</dd>
         
         <dt>Proto Files <span class="property-type">paths</span></dt>
-        <dd>One or more .proto definition files to be loaded.</dd>
+        <dd>One or more .proto definition files to be loaded. You can select multiple proto files when you need to include dependencies or to combine message types from different files. All message types from all selected files will be available in the encoder/decoder nodes.</dd>
         
         <dt>Watch File <span class="property-type">boolean</span></dt>
         <dd>If enabled, the node will detect changes to the first proto file and reload automatically. Currently only the first file in the list is watched due to performance reasons.</dd>
