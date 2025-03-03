@@ -51,26 +51,26 @@ podman run -p 1880:1880 -v $(pwd):/tmp/node-red-contrib-protobuf -d --name noder
 Or using Docker:
 ```bash
 # For Linux/Mac:
-docker run -p 1880:1880 -v "$(pwd)":/tmp/node-red-contrib-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
+docker run -p 1880:1880 -v "$(pwd)":/tmp/node-red-protobuf -d --name node-red-protobuf nodered/node-red
 
 # For Windows PowerShell:
-docker run -p 1880:1880 -v ${PWD}:/tmp/node-red-contrib-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
+docker run -p 1880:1880 -v ${PWD}:/tmp/node-red-protobuf -d --name node-red-protobuf nodered/node-red
 ```
 
 After you saved your changes to the code update the installation within the container with this command:
 
 For Podman:
 ```bash
-podman exec -it nodered-contrib-protobuf_plus npm install /tmp/node-red-contrib-protobuf/ && podman restart nodered-contrib-protobuf_plus
+podman exec -it node-red-protobuf npm install /tmp/node-red-protobuf/ && podman restart nodered-contrib-protobuf_plus
 ```
 
 For Docker:
 ```bash
 # For Linux/Mac:
-docker exec -it nodered-contrib-protobuf_plus npm install /tmp/node-red-contrib-protobuf/ && docker restart nodered-contrib-protobuf_plus
+docker exec -it node-red-protobuf npm install /tmp/node-red-protobuf/ && docker restart node-red-protobuf
 
 # For Windows PowerShell:
-docker exec -it nodered-contrib-protobuf_plus npm install /tmp/node-red-contrib-protobuf/; docker restart nodered-contrib-protobuf_plus 
+docker exec -it node-red-protobuf npm install /tmp/node-red-protobuf/; docker restart node-red-protobuf 
 ```
 
 *Note: On SELinux enabled machines it's necessary to allow containers access to your working directory like this: `chcon -t container_file_t $(pwd)`*
