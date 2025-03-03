@@ -7,25 +7,443 @@
             watchFile: { value: true },
             keepCase: { value: false }
         },
+        oneditprepare: function() {
+            // Initialize the file browser
+            const container = document.getElementById('file-browser-container');
+            initializeFileBrowser(container);
+        },
         label: function() {
             return this.protopath;
         }
     });
+
+    // File browser functionality
+    function initializeFileBrowser(container) {
+        // Add CSS styles for the file browser
+        const style = document.createElement('style');
+        style.textContent = `
+            .directory-tree {
+                list-style-type: none;
+                padding-left: 20px;
+                margin: 0;
+            }
+            .directory-tree > li {
+                margin: 5px 0;
+                display: flex;
+                align-items: center;
+            }
+            .directory {
+                font-weight: bold;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                flex: 1;
+            }
+            .file {
+                font-weight: normal;
+                display: flex;
+                align-items: center;
+                flex: 1;
+            }
+            .expander {
+                display: inline-block;
+                width: 15px;
+                text-align: center;
+                margin-right: 5px;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .fa-folder, .fa-file {
+                margin-right: 5px;
+                flex-shrink: 0;
+            }
+            .file-name {
+                flex: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .file-select {
+                margin-left: 10px;
+                flex-shrink: 0;
+            }
+            /* Override Node-RED default styles for checkboxes in our file browser */
+            .directory-tree input[type="checkbox"].file-select {
+                width: 20px !important;
+                min-width: 20px !important;
+                max-width: 20px !important;
+            }
+            .breadcrumb {
+                padding: 8px 15px;
+                margin-bottom: 10px;
+                list-style: none;
+                background-color: #f5f5f5;
+                border-radius: 4px;
+            }
+            .breadcrumb-item {
+                display: inline;
+                font-size: 14px;
+            }
+            .breadcrumb-item+.breadcrumb-item::before {
+                content: "/";
+                padding: 0 5px;
+                color: #6c757d;
+            }
+            .breadcrumb-item a {
+                text-decoration: none;
+                color: #007bff;
+                cursor: pointer;
+            }
+            .file-browser-selected {
+                margin-top: 10px;
+                border-top: 1px solid #ddd;
+                padding-top: 10px;
+            }
+            .file-browser-selected-list {
+                list-style-type: none;
+                padding-left: 0;
+            }
+            .file-browser-selected-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 5px 0;
+                border-bottom: 1px solid #eee;
+            }
+            .file-browser-remove {
+                color: #dc3545;
+                cursor: pointer;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Make sure container has an ID
+        if (!container.id) {
+            container.id = 'file-browser-container';
+        }
+        
+        // Clear any existing content
+        container.innerHTML = '';
+        
+        // Create breadcrumb navigation
+        const breadcrumb = document.createElement('div');
+        breadcrumb.className = 'breadcrumb';
+        breadcrumb.innerHTML = '<span class="breadcrumb-item"><a data-path="/">Root</a></span>';
+        container.appendChild(breadcrumb);
+        
+        // Create initial tree view
+        const treeContainer = document.createElement('div');
+        treeContainer.className = 'directory-tree-container';
+        container.appendChild(treeContainer);
+        
+        // Create selected files section
+        const selectedContainer = document.createElement('div');
+        selectedContainer.className = 'file-browser-selected';
+        selectedContainer.innerHTML = '<h5>Selected Files</h5><ul class="file-browser-selected-list"></ul>';
+        container.appendChild(selectedContainer);
+        
+        // Get initial directory path from selected files
+        const protopathInput = document.getElementById('node-config-input-protopath');
+        let initialPath = '/';
+        
+        if (protopathInput && protopathInput.value) {
+            const paths = protopathInput.value.split(',').filter(Boolean);
+            const selectedList = container.querySelector('.file-browser-selected-list');
+            
+            // Add selected files to the list
+            paths.forEach(path => {
+                addToSelectedFiles(path, selectedList);
+            });
+            
+            // Use the directory of the first selected file as initial path
+            if (paths.length > 0) {
+                // Extract the directory path from the file path
+                const firstFilePath = paths[0];
+                const lastSlashIndex = firstFilePath.lastIndexOf('/');
+                
+                if (lastSlashIndex > 0) {
+                    initialPath = firstFilePath.substring(0, lastSlashIndex);
+                } else if (firstFilePath.includes(':')) {
+                    // Handle Windows drive paths
+                    initialPath = firstFilePath.split(':')[0] + ':';
+                }
+            }
+        }
+        
+        // Initial load of directory - use container as the reference
+        loadDirectory(initialPath, container, breadcrumb);
+    }
+
+    function loadDirectory(path, container, breadcrumb) {
+        console.log('Loading directory:', path);
+        console.log('Container:', container);
+        
+        // We need to ensure we're working with the correct container
+        let treeContainer;
+        
+        // If the container is the file-browser-container, find the tree container inside it
+        if (container.id === 'file-browser-container') {
+            treeContainer = container.querySelector('.directory-tree-container');
+            console.log('Using tree container from root container:', treeContainer);
+        } else if (container.classList.contains('directory-tree-container')) {
+            // If we're already given the tree container
+            treeContainer = container;
+            console.log('Container is already tree container');
+        } else {
+            // If we're not sure, find the closest file-browser-container and then get its tree container
+            const browserContainer = container.closest('#file-browser-container');
+            treeContainer = browserContainer ? browserContainer.querySelector('.directory-tree-container') : container;
+            console.log('Found tree container from closest browser container:', treeContainer);
+        }
+        
+        if (!treeContainer) {
+            console.error('Could not find tree container', container);
+            return;
+        }
+        
+        // Now we're sure treeContainer is the right element
+        treeContainer.innerHTML = '<p>Loading...</p>';
+        
+        // Update breadcrumb
+        updateBreadcrumb(path, breadcrumb);
+        
+        // Fetch directory contents via API
+        console.log('Fetching from API:', '/protobuf-browser/' + encodeURIComponent(path));
+        fetch('/protobuf-browser/' + encodeURIComponent(path))
+            .then(response => {
+                console.log('API response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('API response data:', data);
+                if (!data || !data.items) {
+                    throw new Error('Invalid response from server');
+                }
+                
+                treeContainer.innerHTML = '';
+                const treeRoot = document.createElement('ul');
+                treeRoot.className = 'directory-tree';
+                treeContainer.appendChild(treeRoot);
+                
+                // Add "up one level" if not at root
+                if (path !== '/' && !path.match(/^[A-Z]:$/)) {
+                    const upItem = document.createElement('li');
+                    upItem.className = 'directory';
+                    upItem.innerHTML = '<span class="expander">↑</span><i class="fa fa-folder"></i> ..';
+                    upItem.dataset.path = path.split('/').slice(0, -1).join('/') || '/';
+                    treeRoot.appendChild(upItem);
+                }
+                
+                // Create list items for each directory/file
+                data.items.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.className = item.isDirectory ? 'directory' : 'file';
+                    listItem.dataset.path = item.path;
+                    
+                    if (item.isDirectory) {
+                        listItem.innerHTML = `
+                            <span class="expander">►</span>
+                            <i class="fa fa-folder"></i>
+                            <span class="file-name">${item.name}</span>
+                        `;
+                    } else if (item.isProto) {
+                        // Check if the file is already selected
+                        const protopathInput = document.getElementById('node-config-input-protopath');
+                        const selectedPaths = protopathInput ? protopathInput.value.split(',').filter(Boolean) : [];
+                        const isSelected = selectedPaths.includes(item.path);
+                        
+                        // Only show checkboxes for .proto files
+                        listItem.innerHTML = `
+                            <span class="expander"></span>
+                            <i class="fa fa-file"></i>
+                            <span class="file-name">${item.name}</span>
+                            <input type="checkbox" class="file-select" data-path="${item.path}" ${isSelected ? 'checked' : ''}>
+                        `;
+                    } else {
+                        listItem.innerHTML = `
+                            <span class="expander"></span>
+                            <i class="fa fa-file"></i>
+                            <span class="file-name">${item.name}</span>
+                        `;
+                    }
+                    
+                    treeRoot.appendChild(listItem);
+                });
+                
+                // Add event listeners
+                setupEventListeners(treeContainer, breadcrumb);
+            })
+            .catch(error => {
+                console.error('Error in loadDirectory:', error);
+                treeContainer.innerHTML = `<p>Error loading directory: ${error.message}</p>`;
+            });
+    }
+
+    function updateBreadcrumb(path, breadcrumb) {
+        if (!breadcrumb) return;
+        
+        breadcrumb.innerHTML = '<span class="breadcrumb-item"><a data-path="/">Root</a></span>';
+        
+        if (path === '/') return;
+        
+        const parts = path.split('/').filter(Boolean);
+        let currentPath = '';
+        
+        parts.forEach((part, index) => {
+            currentPath += '/' + part;
+            breadcrumb.innerHTML += `<span class="breadcrumb-item"><a data-path="${currentPath}">${part}</a></span>`;
+        });
+    }
+
+    function setupEventListeners(container, breadcrumb) {
+        // Find the root container (file-browser-container)
+        const rootContainer = container.closest('#file-browser-container') || 
+                             (container.id === 'file-browser-container' ? container : 
+                             document.getElementById('file-browser-container'));
+        
+        console.log('Setting up event listeners for container:', container);
+        console.log('Root container:', rootContainer);
+        
+        // Handle directory clicks
+        container.querySelectorAll('.directory').forEach(item => {
+            // Remove any existing click listeners to prevent duplicates
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+            
+            newItem.addEventListener('click', function(event) {
+                // Stop the event from bubbling up
+                event.stopPropagation();
+                
+                // Prevent checkbox clicks from triggering directory navigation
+                if (event.target.classList.contains('file-select')) {
+                    return;
+                }
+                
+                // Prevent clicks on elements inside the directory item from triggering navigation
+                // unless it's the directory item itself or the expander
+                if (event.target !== this && 
+                    !event.target.classList.contains('expander') && 
+                    !event.target.classList.contains('fa-folder')) {
+                    return;
+                }
+                
+                console.log('Directory clicked:', this.dataset.path);
+                
+                // Always pass the container directly to loadDirectory
+                // The loadDirectory function will determine the correct treeContainer
+                loadDirectory(this.dataset.path, rootContainer, breadcrumb);
+            });
+        });
+        
+        // Handle breadcrumb navigation
+        if (breadcrumb) {
+            breadcrumb.querySelectorAll('a').forEach(link => {
+                // Remove any existing click listeners
+                const newLink = link.cloneNode(true);
+                link.parentNode.replaceChild(newLink, link);
+                
+                newLink.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.log('Breadcrumb clicked:', this.dataset.path);
+                    loadDirectory(this.dataset.path, rootContainer, breadcrumb);
+                });
+            });
+        }
+        
+        // Handle file selection
+        container.querySelectorAll('.file-select').forEach(checkbox => {
+            // Remove any existing change listeners
+            const newCheckbox = checkbox.cloneNode(true);
+            checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+            
+            newCheckbox.addEventListener('change', function(event) {
+                event.stopPropagation();
+                
+                const path = this.dataset.path;
+                console.log('File selection changed:', path, 'checked:', this.checked);
+                
+                // Make sure we find the selected list from the root container
+                const selectedList = rootContainer.querySelector('.file-browser-selected-list');
+                
+                if (this.checked) {
+                    addToSelectedFiles(path, selectedList);
+                } else {
+                    removeFromSelectedFiles(path, selectedList);
+                }
+                
+                updateProtopathValue();
+            });
+        });
+    }
+
+    function addToSelectedFiles(path, selectedList) {
+        // Check if already added
+        if (selectedList.querySelector(`[data-path="${path}"]`)) return;
+        
+        const item = document.createElement('li');
+        item.className = 'file-browser-selected-item';
+        item.dataset.path = path;
+        item.innerHTML = `
+            <span class="file-browser-path">${path}</span>
+            <span class="file-browser-remove">×</span>
+        `;
+        selectedList.appendChild(item);
+        
+        // Add remove event listener
+        item.querySelector('.file-browser-remove').addEventListener('click', function() {
+            item.remove();
+            
+            // Uncheck the corresponding checkbox if visible
+            const checkbox = document.querySelector(`.file-select[data-path="${path}"]`);
+            if (checkbox) checkbox.checked = false;
+            
+            updateProtopathValue();
+        });
+        
+        updateProtopathValue();
+    }
+
+    function removeFromSelectedFiles(path, selectedList) {
+        const item = selectedList.querySelector(`[data-path="${path}"]`);
+        if (item) {
+            item.remove();
+            updateProtopathValue();
+        }
+    }
+
+    function updateProtopathValue() {
+        const selectedItems = document.querySelectorAll('.file-browser-selected-item');
+        const paths = Array.from(selectedItems).map(item => item.dataset.path);
+        const protopathInput = document.getElementById('node-config-input-protopath');
+        if (protopathInput) {
+            protopathInput.value = paths.join(',');
+        }
+    }
 </script>
 
 <script type="text/x-red" data-template-name="protobuf_file">
     <div class="form-row">
-        <label for="node-config-input-protopath"><i class="icon-file"></i> Path</label>
-        <input type="text" id="node-config-input-protopath"/>
+        <label for="node-config-input-protopath"><i class="icon-file"></i> Proto Files</label>
+        <input type="hidden" id="node-config-input-protopath"/>
+        <div id="file-browser-container" style="min-height:300px; border:1px solid #ddd; border-radius:4px; padding:10px;">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+    <div class="form-row">
         <label for="node-config-input-watchFile"> Watch File</label>
         <input type="checkbox" id="node-config-input-watchFile"/>
-        <label for="node-config-input-watchFile"> Keep snake_case (underscores)</label>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-keepCase"> Keep snake_case (underscores)</label>
         <input type="checkbox" id="node-config-input-keepCase"/>
     </div>
 </script>
 
 <script type="text/x-red" data-help-name="protobuf_file">
-    <p>Provide a path to a .proto definition file. If multiple files are needed (e.g. dependencies) then separate them with commas</p>
+    <p>Provide paths to .proto definition files using the file browser. The browser shows files on the server/container filesystem.</p>
     <h3>Details</h3>
     <p>If the underlying .proto file changes the node will be notified and update the running copy. Currently only the first file in the list is watched due to performance reasons.</p>
     <p>By default snake_case is converted to camelCase when loading proto files. To disable this conversion use the "keep case" option.</p>
