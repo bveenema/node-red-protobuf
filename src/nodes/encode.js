@@ -6,8 +6,10 @@ module.exports = function (RED) {
         this.protoType = config.protoType;
         var node = this;
         node.on('input', function (msg) {
-            msg.protobufType = msg.protobufType || node.protoType;
-            if (msg.protobufType === undefined) {
+            // Only use msg.protobufType when node.protoType is empty
+            const useType = node.protoType || msg.protobufType;
+            
+            if (useType === undefined) {
                 node.error('No protobuf type supplied!');
                 return node.status({fill: 'red', shape: 'dot', text: 'Protobuf type missing'});
             }
@@ -18,7 +20,7 @@ module.exports = function (RED) {
             node.status({fill: 'green', shape: 'dot', text: 'Ready'});
             let messageType;
             try {
-                messageType = node.protofile.protoTypes.lookupType(msg.protobufType);
+                messageType = node.protofile.protoTypes.lookupType(useType);
             }
             catch (error) {
                 node.warn(`
@@ -29,7 +31,7 @@ module.exports = function (RED) {
                     Prototypes content:
                     ${JSON.stringify(node.protofile.protoTypes)}
                     With configured protoType:
-                    ${msg.protobufType}
+                    ${useType}
                 `);
                 return node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
             }
@@ -50,6 +52,8 @@ module.exports = function (RED) {
             ).finish();
             // convert the buffer to a string of hex values
             msg.protobufString = Array.from(msg.payload).map(b => b.toString(16).padStart(2, '0')).join('');
+            // Set protobufType in the message to the type that was actually used
+            msg.protobufType = useType;
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});
             node.send(msg);
         });

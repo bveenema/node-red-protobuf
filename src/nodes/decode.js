@@ -19,8 +19,10 @@ module.exports = function(RED) {
         this.streamTimeoutDuration = config.streamTimeout || 100; // Use configured value or default to 100ms
 
         let resolveMessageType = function (msg) {
-            msg.protobufType = msg.protobufType || node.protoType;
-            if (msg.protobufType === undefined) {
+            // Only use msg.protobufType when node.protoType is empty
+            const useType = node.protoType || msg.protobufType;
+            
+            if (useType === undefined) {
                 node.error('No protobuf type supplied!');
                 return node.status({fill: 'red', shape: 'dot', text: 'Protobuf type missing'});
             }
@@ -31,7 +33,10 @@ module.exports = function(RED) {
             node.status({fill: 'green', shape: 'dot', text: 'Ready'});
             let messageType;
             try {
-                messageType = node.protofile.protoTypes.lookupType(msg.protobufType);
+                messageType = node.protofile.protoTypes.lookupType(useType);
+                // Set protobufType in the message to the type that was actually used
+                msg.protobufType = useType;
+                return messageType;
             }
             catch (error) {
                 node.warn(`
@@ -42,11 +47,11 @@ module.exports = function(RED) {
                     Prototypes content:
                     ${JSON.stringify(node.protofile.protoTypes)}
                     With configured protoType:
-                    ${msg.protobufType}
+                    ${useType}
                 `);
                 node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
+                return null;
             }
-            return messageType;
         };
 
         let createMessageObject = function(completeMessage, lengthBytes = null) {

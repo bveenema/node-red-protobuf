@@ -67,6 +67,49 @@ module.exports = function (RED) {
         }
     });
 
+    // API endpoint to get protobuf types from a file node
+    RED.httpAdmin.get('/protobuf-types/:id', RED.auth.needsPermission('protobuf_file.read'), function(req, res) {
+        const nodeId = req.params.id;
+        const node = RED.nodes.getNode(nodeId);
+        
+        if (node && node.protoTypes) {
+            try {
+                // Extract the types from the loaded protobuf file
+                const types = getAllTypes(node.protoTypes);
+                res.json({ types: types });
+            } catch (error) {
+                res.status(500).send({ error: 'Error extracting types: ' + error.message });
+            }
+        } else {
+            res.status(404).send({ error: 'Node not found or proto file not loaded' });
+        }
+    });
+    
+    // Helper function to get all message types from a protobuf root
+    function getAllTypes(root, prefix = '') {
+        let types = [];
+        
+        if (!root || !root.nested) return types;
+        
+        // Iterate through all nested namespaces and types
+        Object.keys(root.nested).forEach(key => {
+            const elem = root.nested[key];
+            const fullName = prefix ? `${prefix}.${key}` : key;
+            
+            if (elem.fields) {
+                // This is a message type
+                types.push(fullName);
+            }
+            
+            if (elem.nested) {
+                // This is a namespace, recursively get types
+                types = types.concat(getAllTypes(elem, fullName));
+            }
+        });
+        
+        return types;
+    }
+
     function ProtoFileNode(config) {
         RED.nodes.createNode(this, config);
         
@@ -77,15 +120,20 @@ module.exports = function (RED) {
         }
         this.watchFile = config.watchFile;
         this.keepCase = config.keepCase;
+        this.types = []; // Store the list of available message types
         
         const protoFileNode = this;
         
         protoFileNode.load = function () {
             try {
                 protoFileNode.protoTypes = new Root().loadSync(protoFileNode.protopath, { keepCase: protoFileNode.keepCase });
+                
+                // Extract and store all message types
+                protoFileNode.types = getAllTypes(protoFileNode.protoTypes);
             }
             catch (error) {
                 protoFileNode.error('Proto file could not be loaded. ' + error);
+                protoFileNode.types = [];
             }
         };
         

@@ -25,6 +25,9 @@
             return this.name || "decode";
         },
         oneditprepare: function() {
+            const node = this;
+            
+            // Stream input and message delimited UI logic
             var streamInput = $("#node-input-streamInput").is(":checked");
             var messageDelimited = $("#node-input-messageDelimited").is(":checked");
             $("#stream-timeout-row").toggle(streamInput && !messageDelimited);
@@ -34,6 +37,60 @@
                 var messageDelimited = $("#node-input-messageDelimited").is(":checked");
                 $("#stream-timeout-row").toggle(streamInput && !messageDelimited);
             });
+            
+            // Update the protoType dropdown when the protofile is changed
+            $("#node-input-protofile").on("change", function() {
+                const protofileId = $(this).val();
+                updateProtoTypeDropdown(protofileId, node.protoType);
+            });
+            
+            // Initial population of the dropdown
+            const protofileId = $("#node-input-protofile").val();
+            if (protofileId) {
+                updateProtoTypeDropdown(protofileId, node.protoType);
+            }
+            
+            // Function to update the protoType dropdown by fetching types from the API
+            function updateProtoTypeDropdown(protofileId, currentValue) {
+                const $protoTypeField = $("#node-input-protoType");
+                $protoTypeField.empty();
+                
+                // Add blank option
+                $protoTypeField.append($("<option></option>").val("").text("Use msg.protobufType"));
+                
+                if (protofileId) {
+                    // First try to get types from the node in the editor
+                    const protofile = RED.nodes.node(protofileId);
+                    
+                    if (protofile && protofile.types && Array.isArray(protofile.types)) {
+                        // We have types from the node in memory
+                        populateDropdown(protofile.types);
+                    } else {
+                        // Fetch types from the API endpoint
+                        $.getJSON(`/protobuf-types/${protofileId}`, function(data) {
+                            if (data && data.types) {
+                                populateDropdown(data.types);
+                            }
+                        }).fail(function(err) {
+                            console.error("Error fetching protobuf types:", err);
+                        });
+                    }
+                }
+                
+                // Helper function to populate the dropdown with types
+                function populateDropdown(types) {
+                    // Sort types alphabetically
+                    types.sort();
+                    
+                    // Add each type as an option
+                    types.forEach(function(type) {
+                        $protoTypeField.append($("<option></option>").val(type).text(type));
+                    });
+                    
+                    // Set the current value
+                    $protoTypeField.val(currentValue || "");
+                }
+            }
         }
     });
 </script>
@@ -49,7 +106,9 @@
     </div>
     <div class="form-row">
         <label for="node-input-protoType"><i class="icon-tag"></i> Type</label>
-        <input type="text" id="node-input-protoType" placeholder="Proto Message Type">
+        <select id="node-input-protoType">
+            <option value="">Use msg.protobufType</option>
+        </select>
     </div>
 
     <!-- Message Format -->
@@ -134,7 +193,8 @@
             <span class="property-type">string</span>
         </dt>
         <dd>
-            The identifier string of the corresponding protobuf type definition of the message. Optional if configured in the node.
+            The identifier string of the corresponding protobuf type definition of the message. 
+            Only used when "Use msg.protobufType" is selected in the Type dropdown.
         </dd>
     </dl>
 
@@ -156,6 +216,7 @@
 
     <h3>Details</h3>
     <p>This node decodes protobuf messages into JavaScript objects using a specified message type definition.</p>
+    <p>The Type dropdown allows you to select from available message types in the proto file. If you select a specific type, it will always use that type and ignore any msg.protobufType in the incoming message. If you select "Use msg.protobufType", the node will use the type specified in the msg.protobufType property.</p>
 
     <h4>Message Format</h4>
     <ul>
@@ -182,7 +243,6 @@
 
     <h3>Notes</h3>
     <ul>
-        <li>The protobufType from a message always takes precedence over the node's configured type.</li>
         <li>If a message is incomplete, all fields that can be decoded will be included in a partial output message.</li>
         <li>When using stream input without delimited messages, the timeout determines when to process accumulated bytes.</li>
         <li>For serial data or protocols that send one byte at a time, enable stream input and configure an appropriate timeout.</li>

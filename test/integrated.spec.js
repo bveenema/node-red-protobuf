@@ -10,11 +10,13 @@ const generateIntegratedFlow = function(protoFilePath, protoType, keepCase) {
     return [
         {
             'id': 'encode-node',
-            'type': 'encode',
+            'type': 'pb_encode',
             'z': 'e4c459b3.cc22e8',
             'name': '',
             'protofile': 'c55e9eb5.3175',
             'protoType': protoType,
+            'messageDelimited': true,
+            'flexibleInput': true,
             'wires': [
                 [
                     'decode-node'
@@ -23,11 +25,22 @@ const generateIntegratedFlow = function(protoFilePath, protoType, keepCase) {
         },
         {
             'id': 'decode-node',
-            'type': 'decode',
+            'type': 'pb_decode',
             'z': 'e4c459b3.cc22e8',
             'name': '',
             'protofile': 'c55e9eb5.3175',
             'protoType': protoType,
+            'messageDelimited': true,
+            'streamInput': false,
+            'streamTimeout': 100,
+            'decodeEnums': 'String',
+            'decodeLongs': 'String',
+            'decodeBytes': 'String',
+            'decodeDefaults': true,
+            'decodeArrays': false,
+            'decodeObjects': false,
+            'decodeOneofs': false,
+            'decodeJson': false,
             'wires': [
                 [
                     'helper-node'
@@ -63,6 +76,8 @@ describe('protobuf integration test', function () {
     });
 
     it('should encode and decode a message with idempotence', function (done) {
+        //this.timeout(10000);
+        
         helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/test.proto', 'TestType'), function () {
             let testMessage = {
                 timestamp: 1533295590569,
@@ -84,6 +99,8 @@ describe('protobuf integration test', function () {
     });
 
     it('should encode and decode a message with underscores in field names', function (done) {
+        //this.timeout(10000);
+        
         helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/issue29.proto', 'Department', true), function () {
             let testMessage = {
                 department_id: 12345,

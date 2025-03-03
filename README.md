@@ -8,6 +8,7 @@ It is originally based on the [node-red-contrib-protobuf](https://github.com/w4t
   - Flexible encode for on-the-fly conversion including ability to specify enums by string
 - Stream Input Mode
 - Support for Delimited messages
+- Improved UI for selecting Proto Files and Types
 
 ## Installation
 
@@ -95,5 +96,4 @@ Forked and enhanced from original project [node-red-contrib-protobuf](https://gi
 
 ## Roadmap
 
-- Better file and type selection UI
 - Option to split fields into separate messages

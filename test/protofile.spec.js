@@ -2,16 +2,30 @@ var should = require('should');
 var helper = require('node-red-node-test-helper');
 var protofile = require('../src/nodes/protofile');
 var fs = require('fs');
+var path = require('path');
 const { SSL_OP_EPHEMERAL_RSA } = require('constants');
 const { time } = require('console');
+const os = require('os');
 
 helper.init(require.resolve('node-red'));
+
+// Create a platform-independent temp directory path
+const tempDir = process.env.TEMP || os.tmpdir();
+const tempFilePath = path.join(tempDir, 'test.proto');
 
 describe('protobuf protofile node', function () {
 
   afterEach(function () {
     helper.unload();
     should();
+    // Clean up temp file if it exists
+    try {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    } catch (err) {
+      console.error("Error cleaning up temp file:", err);
+    }
   });
 
   it('test.proto should be loadable', function (done) {
@@ -32,10 +46,15 @@ describe('protobuf protofile node', function () {
   });
 
   it('should reload on file change', function (done) {
-    fs.copyFileSync('test/assets/test.proto', '/tmp/test.proto');
-    var flow = [{ id: 'n1', type: 'protobuf_file', name: 'test name', protopath: '/tmp/test.proto' }];
+    // Create tempDir if it doesn't exist
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    fs.copyFileSync('test/assets/test.proto', tempFilePath);
+    var flow = [{ id: 'n1', type: 'protobuf_file', name: 'test name', protopath: tempFilePath }];
     helper.load(protofile, flow, function () {
-      fs.copyFileSync('test/assets/complex.proto', '/tmp/test.proto');
+      fs.copyFileSync('test/assets/complex.proto', tempFilePath);
       let n1 = helper.getNode('n1');
       setTimeout(() => {
         n1.protoTypes.should.have.property('Zaehler_Waerme').which.is.a.Object();

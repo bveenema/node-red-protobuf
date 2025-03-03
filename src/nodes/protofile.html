@@ -2,6 +2,7 @@
     RED.nodes.registerType('protobuf_file', {
         category: 'config',
         defaults: {
+            name: { value: "" },
             protopath: { value: "", required: true },
             prototypes: { value: "" },
             watchFile: { value: true },
@@ -13,7 +14,24 @@
             initializeFileBrowser(container);
         },
         label: function() {
-            return this.protopath;
+            // Use the name if set, otherwise use the protopath
+            if (this.name) {
+                return this.name;
+            }
+            // Get first path from the comma-separated list
+            if (this.protopath) {
+                const paths = this.protopath.split(',').filter(Boolean);
+                if (paths.length > 0) {
+                    // Extract the filename from the path for display
+                    const firstPath = paths[0];
+                    const lastSlashIndex = firstPath.lastIndexOf('/');
+                    if (lastSlashIndex >= 0) {
+                        return firstPath.substring(lastSlashIndex + 1);
+                    }
+                    return firstPath;
+                }
+            }
+            return "Proto File";
         }
     });
 
@@ -426,6 +444,10 @@
 
 <script type="text/x-red" data-template-name="protobuf_file">
     <div class="form-row">
+        <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Optional identifier">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-protopath"><i class="icon-file"></i> Proto Files</label>
         <input type="hidden" id="node-config-input-protopath"/>
         <div id="file-browser-container" style="min-height:300px; border:1px solid #ddd; border-radius:4px; padding:10px;">
@@ -444,7 +466,18 @@
 
 <script type="text/x-red" data-help-name="protobuf_file">
     <p>Provide paths to .proto definition files using the file browser. The browser shows files on the server/container filesystem.</p>
-    <h3>Details</h3>
-    <p>If the underlying .proto file changes the node will be notified and update the running copy. Currently only the first file in the list is watched due to performance reasons.</p>
-    <p>By default snake_case is converted to camelCase when loading proto files. To disable this conversion use the "keep case" option.</p>
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Name <span class="property-type">string</span></dt>
+        <dd>Optional name to identify this proto file configuration in the encoder/decoder nodes. If not set, the filename of the first selected proto file will be used instead.</dd>
+        
+        <dt>Proto Files <span class="property-type">paths</span></dt>
+        <dd>One or more .proto definition files to be loaded.</dd>
+        
+        <dt>Watch File <span class="property-type">boolean</span></dt>
+        <dd>If enabled, the node will detect changes to the first proto file and reload automatically. Currently only the first file in the list is watched due to performance reasons.</dd>
+        
+        <dt>Keep snake_case <span class="property-type">boolean</span></dt>
+        <dd>By default snake_case is converted to camelCase when loading proto files. Enable this option to keep the original case in field names.</dd>
+    </dl>
 </script>

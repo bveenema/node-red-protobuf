@@ -14,6 +14,63 @@
         icon: "hash.png",
         label: function () {
             return this.name || "encode";
+        },
+        oneditprepare: function() {
+            const node = this;
+            
+            // Update the protoType dropdown when the protofile is changed
+            $("#node-input-protofile").on("change", function() {
+                const protofileId = $(this).val();
+                updateProtoTypeDropdown(protofileId, node.protoType);
+            });
+            
+            // Initial population of the dropdown
+            const protofileId = $("#node-input-protofile").val();
+            if (protofileId) {
+                updateProtoTypeDropdown(protofileId, node.protoType);
+            }
+            
+            // Function to update the protoType dropdown by fetching types from the API
+            function updateProtoTypeDropdown(protofileId, currentValue) {
+                const $protoTypeField = $("#node-input-protoType");
+                $protoTypeField.empty();
+                
+                // Add blank option
+                $protoTypeField.append($("<option></option>").val("").text("Use msg.protobufType"));
+                
+                if (protofileId) {
+                    // First try to get types from the node in the editor
+                    const protofile = RED.nodes.node(protofileId);
+                    
+                    if (protofile && protofile.types && Array.isArray(protofile.types)) {
+                        // We have types from the node in memory
+                        populateDropdown(protofile.types);
+                    } else {
+                        // Fetch types from the API endpoint
+                        $.getJSON(`/protobuf-types/${protofileId}`, function(data) {
+                            if (data && data.types) {
+                                populateDropdown(data.types);
+                            }
+                        }).fail(function(err) {
+                            console.error("Error fetching protobuf types:", err);
+                        });
+                    }
+                }
+                
+                // Helper function to populate the dropdown with types
+                function populateDropdown(types) {
+                    // Sort types alphabetically
+                    types.sort();
+                    
+                    // Add each type as an option
+                    types.forEach(function(type) {
+                        $protoTypeField.append($("<option></option>").val(type).text(type));
+                    });
+                    
+                    // Set the current value
+                    $protoTypeField.val(currentValue || "");
+                }
+            }
         }
     });
 </script>
@@ -32,7 +89,9 @@
     <div class="form-row">
         <label for="node-input-protoType">
             <i class="icon-tag"></i> Type</label>
-        <input type="text" id="node-input-protoType" placeholder="Proto Message Type">
+        <select id="node-input-protoType">
+            <option value="">Use msg.protobufType</option>
+        </select>
     </div>
 
     <h4>Message Format</h4>
@@ -63,6 +122,7 @@
         </dt>
         <dd>
             the identifier string of the corresponding protobuf type definition of the message.
+            Only used when "Use msg.protobufType" is selected in the Type dropdown.
         </dd>
     </dl>
     <h3>Outputs</h3>
@@ -88,7 +148,7 @@
     </dl>
     <h3>Details</h3>
     <p>When supplied with a protobuf type from the protofile the node will encode the message with protobufjs defaults into a binary buffer object.</p>
-    <p>The protobufType from a message always takes precedence over the node defined type.</p>
+    <p>The Type dropdown allows you to select from available message types in the proto file. If you select a specific type, it will always use that type and ignore any msg.protobufType in the incoming message. If you select "Use msg.protobufType", the node will use the type specified in the msg.protobufType property.</p>
     
     <h4>Message Format Options</h4>
     <p><b>Delimited</b> - When enabled, the message will be encoded with length-delimited format. This is useful when streaming multiple messages or when the message size needs to be known upfront.</p>
