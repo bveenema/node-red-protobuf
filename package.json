@@ -1,6 +1,6 @@
 {
   "name": "@bveenema/node-red-protobuf",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Enhanced protocol buffer encode/decode nodes.",
   "main": "src/index.js",
   "scripts": {

@@ -1,0 +1,256 @@
+[
+    {
+        "id": "4d224dd9e142a18b",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Example: Basic Decode Flow",
+        "info": "",
+        "x": 160,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "b17bc740a1fc23b1",
+        "type": "inject",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "props": [
+            {
+                "p": "protobufString",
+                "v": "1d090000000000408f4015c3f548401801220b5465737420537472696e67",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 170,
+        "y": 420,
+        "wires": [
+            [
+                "4abefd24679b4941"
+            ]
+        ]
+    },
+    {
+        "id": "4abefd24679b4941",
+        "type": "function",
+        "z": "58d7a9a4d123120a",
+        "name": "string to buffer",
+        "func": "function hexToBuffer(hexString) {\n    // Remove any spaces or '0x' prefix if present\n    hexString = hexString.replace(/\\s|0x/g, '');\n    // Convert hex string to Buffer\n    return Buffer.from(hexString, 'hex');\n}\n\nmsg.payload = hexToBuffer(msg.protobufString)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 420,
+        "wires": [
+            [
+                "7abef77e5776eb50"
+            ]
+        ]
+    },
+    {
+        "id": "7abef77e5776eb50",
+        "type": "pb_decode",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "BasicType",
+        "messageDelimited": true,
+        "streamInput": false,
+        "streamTimeout": 100,
+        "decodeEnums": "String",
+        "decodeLongs": "String",
+        "decodeBytes": "String",
+        "decodeDefaults": true,
+        "decodeArrays": false,
+        "decodeObjects": false,
+        "decodeOneofs": false,
+        "decodeJson": false,
+        "x": 560,
+        "y": 420,
+        "wires": [
+            [
+                "e2e247669c8a6140"
+            ]
+        ]
+    },
+    {
+        "id": "bb44700f63f562d6",
+        "type": "pb_decode",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "BasicType",
+        "messageDelimited": true,
+        "streamInput": true,
+        "streamTimeout": 100,
+        "decodeEnums": "String",
+        "decodeLongs": "String",
+        "decodeBytes": "String",
+        "decodeDefaults": true,
+        "decodeArrays": false,
+        "decodeObjects": false,
+        "decodeOneofs": false,
+        "decodeJson": false,
+        "x": 720,
+        "y": 600,
+        "wires": [
+            [
+                "25b32762e5bae2f8"
+            ]
+        ]
+    },
+    {
+        "id": "6a31b744e52d765d",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Blocked Message Mode",
+        "info": "",
+        "x": 200,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "c0ab7340989bf265",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Note",
+        "info": "We are using this string to buffer function to make it\neasier to paste encoded protobuf Strings into the inject node\nfor testing.",
+        "x": 330,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "e2e247669c8a6140",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 740,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "f8b5fcf1b913f957",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Streamed Message Mode",
+        "info": "",
+        "x": 210,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "35f68b7b55335988",
+        "type": "split",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "splt": "1",
+        "spltType": "len",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 550,
+        "y": 600,
+        "wires": [
+            [
+                "bb44700f63f562d6"
+            ]
+        ]
+    },
+    {
+        "id": "25b32762e5bae2f8",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "0e69c183702a3f41",
+        "type": "inject",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "props": [
+            {
+                "p": "protobufString",
+                "v": "1d090000000000408f4015c3f548401801220b5465737420537472696e67",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 170,
+        "y": 600,
+        "wires": [
+            [
+                "d8b1e2addd65fb76"
+            ]
+        ]
+    },
+    {
+        "id": "d8b1e2addd65fb76",
+        "type": "function",
+        "z": "58d7a9a4d123120a",
+        "name": "string to buffer",
+        "func": "function hexToBuffer(hexString) {\n    // Remove any spaces or '0x' prefix if present\n    hexString = hexString.replace(/\\s|0x/g, '');\n    // Convert hex string to Buffer\n    return Buffer.from(hexString, 'hex');\n}\n\nmsg.payload = hexToBuffer(msg.protobufString)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 600,
+        "wires": [
+            [
+                "35f68b7b55335988"
+            ]
+        ]
+    },
+    {
+        "id": "e9744cdbc183aad3",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Note",
+        "info": "The buffer in msg.payload is being split into single bytes.\nDecode does the \"joining\" so we don't need a matching join node.",
+        "x": 550,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "5345206257f7adb3",
+        "type": "protobuf_file",
+        "name": "",
+        "protopath": "/data/node_modules/@bveenema/node-red-protobuf/examples/protos/basic.proto",
+        "watchFile": true,
+        "keepCase": false
+    }
+]

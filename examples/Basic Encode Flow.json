@@ -1,0 +1,104 @@
+[
+    {
+        "id": "05132f13d96061ab",
+        "type": "inject",
+        "z": "58d7a9a4d123120a",
+        "name": "inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "protobufType",
+                "v": "TestType",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"timestamp\":1000,\"foo\":3.14,\"bar\":true,\"test\":\"Test String\"}",
+        "payloadType": "json",
+        "x": 170,
+        "y": 120,
+        "wires": [
+            [
+                "3f79d890fd9d876a"
+            ]
+        ]
+    },
+    {
+        "id": "a5e0d76bf5388c87",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "3f79d890fd9d876a",
+        "type": "pb_encode",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "BasicType",
+        "messageDelimited": true,
+        "flexibleInput": false,
+        "x": 340,
+        "y": 120,
+        "wires": [
+            [
+                "a5e0d76bf5388c87"
+            ]
+        ]
+    },
+    {
+        "id": "7f331d8f2e9e4255",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Example: Basic Encode Flow",
+        "info": "",
+        "x": 160,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "3d354b0a7f9541f7",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Inject JSON Payload to match Proto Type",
+        "info": "",
+        "x": 260,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "ceea405315fe12a2",
+        "type": "comment",
+        "z": "58d7a9a4d123120a",
+        "name": "Change \"Delimited\" checkbox and compare output",
+        "info": "",
+        "x": 350,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "5345206257f7adb3",
+        "type": "protobuf_file",
+        "name": "",
+        "protopath": "/data/node_modules/@bveenema/node-red-protobuf/examples/protos/basic.proto",
+        "watchFile": true,
+        "keepCase": false
+    }
+]

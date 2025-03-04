@@ -46,32 +46,32 @@ To setup your local development environment first clone this repository, then us
 
 Using Podman:
 ```bash
-podman run -p 1880:1880 -v $(pwd):/tmp/node-red-contrib-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
+podman run -p 1880:1880 -v $(pwd):/data/node_modules/@bveenema/node-red-protobuf -d --name nodered-contrib-protobuf_plus nodered/node-red
 ```
 
 Or using Docker:
 ```bash
 # For Linux/Mac:
-docker run -p 1880:1880 -v "$(pwd)":/tmp/node-red-protobuf -d --name node-red-protobuf nodered/node-red
+docker run -p 1880:1880 -v "$(pwd)":/data/node_modules/@bveenema/node-red-protobuf -d --name node-red-protobuf nodered/node-red
 
 # For Windows PowerShell:
-docker run -p 1880:1880 -v ${PWD}:/tmp/node-red-protobuf -d --name node-red-protobuf nodered/node-red
+docker run -p 1880:1880 -v ${PWD}:/data/node_modules/@bveenema/node-red-protobuf -d --name node-red-protobuf nodered/node-red
 ```
 
 After you saved your changes to the code update the installation within the container with this command:
 
 For Podman:
 ```bash
-podman exec -it node-red-protobuf npm install /tmp/node-red-protobuf/ && podman restart nodered-contrib-protobuf_plus
+podman exec -it node-red-protobuf npm install /data/node_modules/@bveenema/node-red-protobuf/ && podman restart nodered-contrib-protobuf_plus
 ```
 
 For Docker:
 ```bash
 # For Linux/Mac:
-docker exec -it node-red-protobuf npm install /tmp/node-red-protobuf/ && docker restart node-red-protobuf
+docker exec -it node-red-protobuf npm install /data/node_modules/@bveenema/node-red-protobuf/ && docker restart node-red-protobuf
 
 # For Windows PowerShell:
-docker exec -it node-red-protobuf npm install /tmp/node-red-protobuf/; docker restart node-red-protobuf 
+docker exec -it node-red-protobuf npm install /data/node_modules/@bveenema/node-red-protobuf/; docker restart node-red-protobuf 
 ```
 
 *Note: On SELinux enabled machines it's necessary to allow containers access to your working directory like this: `chcon -t container_file_t $(pwd)`*
@@ -96,4 +96,5 @@ Forked and enhanced from original project [node-red-contrib-protobuf](https://gi
 
 ## Roadmap
 
+- Preview box for Proto Type (maybe also for Types within Proto File)
 - Option to split fields into separate messages
