@@ -1,0 +1,231 @@
+[
+    {
+        "id": "58d7a9a4d123120a",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "7ebdcb91baea43e5",
+        "type": "inject",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "protoString",
+                "v": "2b0a250a15080212114d696c6c69733a203236383732353437320a0a08021206494f323a2030100212021801",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "[10,35,10,19,8,2,18,15,77,105,108,108,105,115,58,32,51,51,50,54,48,48,48,10,10,8,2,18,6,73,79,50,58,32,49,16,2]",
+        "payloadType": "json",
+        "x": 110,
+        "y": 260,
+        "wires": [
+            [
+                "25650c657dea0ea2"
+            ]
+        ]
+    },
+    {
+        "id": "25650c657dea0ea2",
+        "type": "function",
+        "z": "58d7a9a4d123120a",
+        "name": "string to buffer",
+        "func": "function hexToBuffer(hexString) {\n    // Remove any spaces or '0x' prefix if present\n    hexString = hexString.replace(/\\s|0x/g, '');\n    // Convert hex string to Buffer\n    return Buffer.from(hexString, 'hex');\n}\n\nmsg.payload = hexToBuffer(msg.protoString)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 260,
+        "wires": [
+            [
+                "dfdd1df1dbf9ad99",
+                "1c273dabb57ffe8c"
+            ]
+        ]
+    },
+    {
+        "id": "a0d3b92257f0def5",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 900,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "dfdd1df1dbf9ad99",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 450,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "3d617b8d5f7eb8d6",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 4",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 720,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "05132f13d96061ab",
+        "type": "inject",
+        "z": "58d7a9a4d123120a",
+        "name": "inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "protobufType",
+                "v": "TestType",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"timestamp\":1000}",
+        "payloadType": "json",
+        "x": 110,
+        "y": 400,
+        "wires": [
+            [
+                "3f79d890fd9d876a"
+            ]
+        ]
+    },
+    {
+        "id": "a5e0d76bf5388c87",
+        "type": "debug",
+        "z": "58d7a9a4d123120a",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "1c273dabb57ffe8c",
+        "type": "pb_decode",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "TestType",
+        "messageDelimited": true,
+        "streamInput": false,
+        "streamTimeout": 100,
+        "decodeEnums": "String",
+        "decodeLongs": "String",
+        "decodeBytes": "String",
+        "decodeDefaults": true,
+        "decodeArrays": false,
+        "decodeObjects": false,
+        "decodeOneofs": false,
+        "decodeJson": false,
+        "x": 500,
+        "y": 260,
+        "wires": [
+            [
+                "3d617b8d5f7eb8d6",
+                "26a559157c21faa2"
+            ]
+        ]
+    },
+    {
+        "id": "26a559157c21faa2",
+        "type": "pb_encode",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "TestType",
+        "messageDelimited": true,
+        "flexibleInput": false,
+        "x": 700,
+        "y": 260,
+        "wires": [
+            [
+                "a0d3b92257f0def5"
+            ]
+        ]
+    },
+    {
+        "id": "3f79d890fd9d876a",
+        "type": "pb_encode",
+        "z": "58d7a9a4d123120a",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "TestType",
+        "messageDelimited": true,
+        "flexibleInput": false,
+        "x": 280,
+        "y": 400,
+        "wires": [
+            [
+                "a5e0d76bf5388c87"
+            ]
+        ]
+    },
+    {
+        "id": "5345206257f7adb3",
+        "type": "protobuf_file",
+        "name": "",
+        "protopath": "/tmp/node-red-protobuf/test/assets/chain.proto",
+        "watchFile": true,
+        "keepCase": false
+    }
+]

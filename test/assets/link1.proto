@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message Link1Type { 
+	double timestamp = 1;
+	float foo = 2;
+}

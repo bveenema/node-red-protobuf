@@ -1,0 +1,8 @@
+syntax = "proto3";
+import "link1.proto";
+import "link2.proto";
+
+message TestType { 
+	Link1Type link1 = 1;
+	Link2Type link2 = 2;
+}

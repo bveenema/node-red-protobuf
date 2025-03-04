@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message Link2Type { 
+	bool bar = 1;
+	string test = 2;
+	bool no_more_snake_case = 3;
+}
