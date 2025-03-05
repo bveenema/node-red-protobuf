@@ -85,6 +85,83 @@ module.exports = function (RED) {
         }
     });
     
+    // New API endpoint to get a specific type definition
+    RED.httpAdmin.get('/protobuf-type-definition/:id/:type', RED.auth.needsPermission('protobuf_file.read'), function(req, res) {
+        const nodeId = req.params.id;
+        const typeName = req.params.type;
+        const node = RED.nodes.getNode(nodeId);
+        
+        if (!node || !node.protoTypes) {
+            return res.status(404).send({ error: 'Node not found or proto file not loaded' });
+        }
+        
+        try {
+            // Find the requested type in the proto definition
+            let typeObj;
+            try {
+                typeObj = node.protoTypes.lookupType(typeName);
+            } catch (e) {
+                return res.status(404).send({ error: 'Type not found: ' + typeName });
+            }
+            
+            if (!typeObj) {
+                return res.status(404).send({ error: 'Type not found: ' + typeName });
+            }
+            
+            // Generate a pretty-printed representation of the type structure
+            const definition = formatTypeDefinition(typeObj);
+            
+            res.json({ definition: definition });
+        } catch (error) {
+            res.status(500).send({ error: 'Error getting type definition: ' + error.message });
+        }
+    });
+    
+    // Helper function to format a type definition for display
+    function formatTypeDefinition(typeObj) {
+        let result = `message ${typeObj.name} {\n`;
+        
+        // Format fields
+        Object.entries(typeObj.fields).forEach(([fieldName, field]) => {
+            // Handle field type (could be a primitive or another message)
+            let fieldType = field.type;
+            if (field.resolvedType) {
+                fieldType = field.resolvedType.fullName;
+            }
+            
+            // Handle repeated fields
+            const repeated = field.repeated ? 'repeated ' : '';
+            
+            // Handle field rule
+            const rule = field.rule ? field.rule + ' ' : '';
+            
+            // Add indentation and field definition
+            result += `  ${rule}${repeated}${fieldType} ${fieldName} = ${field.id};\n`;
+        });
+        
+        // Handle nested types
+        if (typeObj.nested) {
+            Object.entries(typeObj.nested).forEach(([nestedName, nestedType]) => {
+                if (nestedType.fields) {  // It's a message
+                    const nestedDefinition = formatTypeDefinition(nestedType)
+                        .split('\n')
+                        .map(line => `  ${line}`)  // Add extra indentation
+                        .join('\n');
+                    result += `\n${nestedDefinition}\n`;
+                } else if (nestedType.values) {  // It's an enum
+                    result += `\n  enum ${nestedName} {\n`;
+                    Object.entries(nestedType.values).forEach(([enumName, enumValue]) => {
+                        result += `    ${enumName} = ${enumValue};\n`;
+                    });
+                    result += `  }\n`;
+                }
+            });
+        }
+        
+        result += '}';
+        return result;
+    }
+    
     // Helper function to get all message types from a protobuf root
     function getAllTypes(root, prefix = '') {
         let types = [];

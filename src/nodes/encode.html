@@ -69,8 +69,48 @@
                     
                     // Set the current value
                     $protoTypeField.val(currentValue || "");
+                    
+                    // Update the preview when dropdown is populated
+                    updateTypePreview($protoTypeField.val());
                 }
             }
+            
+            // Function to update the type preview
+            function updateTypePreview(typeName) {
+                const $previewField = $("#node-input-protoType-preview");
+                const $previewContainer = $("#protoType-preview-container");
+                
+                // Clear preview
+                $previewField.val("");
+                $previewContainer.hide();
+                
+                if (!typeName || typeName === "") {
+                    return;
+                }
+                
+                const protofileId = $("#node-input-protofile").val();
+                if (!protofileId) {
+                    return;
+                }
+                
+                // Fetch the type definition from the API
+                $.getJSON(`/protobuf-type-definition/${protofileId}/${typeName}`, function(data) {
+                    if (data && data.definition) {
+                        // Set the full preview text
+                        $previewField.val(data.definition);
+                        $previewContainer.show();
+                    }
+                }).fail(function(err) {
+                    console.error("Error fetching protobuf type definition:", err);
+                    $previewField.val("Error loading type definition");
+                    $previewContainer.show();
+                });
+            }
+            
+            // Update preview when the type is changed
+            $("#node-input-protoType").on("change", function() {
+                updateTypePreview($(this).val());
+            });
         }
     });
 </script>
@@ -92,6 +132,10 @@
         <select id="node-input-protoType">
             <option value="">Use msg.protobufType</option>
         </select>
+    </div>
+    <div class="form-row" id="protoType-preview-container" style="display:none;">
+        <label for="node-input-protoType-preview"><i class="icon-eye"></i> Preview</label>
+        <textarea id="node-input-protoType-preview" readonly style="font-family:monospace; height:80px; resize:vertical; width:70%;"></textarea>
     </div>
 
     <h4>Message Format</h4>
