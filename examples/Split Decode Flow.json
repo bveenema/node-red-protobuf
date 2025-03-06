@@ -1,0 +1,186 @@
+[
+    {
+        "id": "055b5300c339b08f",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "test",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "54cf798ec8c29ac5",
+        "type": "pb_decode",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "protofile": "5345206257f7adb3",
+        "protoType": "BasicType",
+        "splitOutput": true,
+        "outputs": 4,
+        "messageDelimited": false,
+        "streamInput": false,
+        "streamTimeout": 100,
+        "decodeEnums": "String",
+        "decodeLongs": "String",
+        "decodeBytes": "String",
+        "decodeDefaults": true,
+        "decodeArrays": false,
+        "decodeObjects": false,
+        "decodeOneofs": false,
+        "decodeJson": false,
+        "fieldNames": [
+            "timestamp",
+            "foo",
+            "bar",
+            "test"
+        ],
+        "x": 640,
+        "y": 740,
+        "wires": [
+            [
+                "b1246a8e33621715"
+            ],
+            [
+                "8220509c07468f5a"
+            ],
+            [
+                "7d39123547de9a01"
+            ],
+            [
+                "055b5300c339b08f"
+            ]
+        ]
+    },
+    {
+        "id": "3cf3a0320473f095",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "Example: Split Output",
+        "info": "",
+        "x": 220,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "b1246a8e33621715",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "timestamp",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 830,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "6474ba31e99a5de0",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "props": [
+            {
+                "p": "protobufString",
+                "v": "0900000000002db040155c8f2442180022096d7920737472696e67",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 250,
+        "y": 740,
+        "wires": [
+            [
+                "3d5224b395f2ed48"
+            ]
+        ]
+    },
+    {
+        "id": "3d5224b395f2ed48",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "string to buffer",
+        "func": "function hexToBuffer(hexString) {\n    // Remove any spaces or '0x' prefix if present\n    hexString = hexString.replace(/\\s|0x/g, '');\n    // Convert hex string to Buffer\n    return Buffer.from(hexString, 'hex');\n}\n\nmsg.payload = hexToBuffer(msg.protobufString)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 740,
+        "wires": [
+            [
+                "54cf798ec8c29ac5"
+            ]
+        ]
+    },
+    {
+        "id": "8220509c07468f5a",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "foo",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "7d39123547de9a01",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "bar",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "834a966f8aece411",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "Note",
+        "info": "We are using this string to buffer function to make it\neasier to paste encoded protobuf Strings into the inject node\nfor testing.",
+        "x": 410,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "5345206257f7adb3",
+        "type": "protobuf_file",
+        "name": "",
+        "protopath": "/data/node_modules/@bveenema/node-red-protobuf/examples/protos/basic.proto",
+        "watchFile": true,
+        "keepCase": false
+    }
+]

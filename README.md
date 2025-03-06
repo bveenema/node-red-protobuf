@@ -9,6 +9,7 @@ It is originally based on the [node-red-contrib-protobuf](https://github.com/w4t
 - Stream Input Mode
 - Support for Delimited messages
 - Improved UI for selecting Proto Files and Types
+- Automatically split decoded messages into their respective fields
 
 ## Installation
 
@@ -92,9 +93,3 @@ The BSD 3-Clause License
 
 ## Contributors
 Forked and enhanced from original project [node-red-contrib-protobuf](https://github.com/w4tsn/node-red-contrib-protobuf) by [Alexander Wellbrock](https://w4tsn.github.io/blog)
-
-
-## Roadmap
-
-- Preview box for Proto Type (maybe also for Types within Proto File)
-- Option to split fields into separate messages

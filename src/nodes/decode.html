@@ -6,6 +6,8 @@
             name: { value: "" },
             protofile: { value: "", type: "protobuf_file" },
             protoType: { value: "" },
+            splitOutput: { value: false },
+            outputs: { value: 1 },
             messageDelimited: { value: true },
             streamInput: { value: false },
             streamTimeout: { value: 100 },
@@ -17,6 +19,7 @@
             decodeObjects: { value: false },
             decodeOneofs: { value: false },
             decodeJson: { value: false },
+            fieldNames: { value: [] }  // New property to store field names
         },
         inputs: 1,
         outputs: 1,
@@ -24,8 +27,32 @@
         label: function() {
             return this.name || "decode";
         },
+        // Add outputLabels function to show field names as output labels
+        outputLabels: function(index) {
+            // If Split Output is not enabled, return empty label for the single output
+            if (!this.splitOutput || this.outputs <= 1) {
+                return "";
+            }
+            
+            // If we have stored field names, use them
+            if (this.fieldNames && Array.isArray(this.fieldNames) && this.fieldNames.length > index) {
+                return this.fieldNames[index];
+            }
+            
+            // Default to numbered outputs if we don't have field names
+            return "field " + (index + 1);
+        },
         oneditprepare: function() {
+            console.log("oneditprepare");
             const node = this;
+            
+            // Store the initial split output state early
+            const initialSplitOutput = node.splitOutput;
+            const initialOutputs = node.outputs > 1 ? node.outputs : 1;
+            console.log(`Initial split state: splitOutput=${initialSplitOutput}, outputs=${initialOutputs}`);
+            
+            // Set these values explicitly on the hidden field
+            $("#node-input-outputs").val(initialOutputs);
             
             // Stream input and message delimited UI logic
             var streamInput = $("#node-input-streamInput").is(":checked");
@@ -92,6 +119,9 @@
                     
                     // Update the preview when dropdown is populated
                     updateTypePreview($protoTypeField.val());
+                    
+                    // Update split output status with initialization flag to preserve the initial state
+                    updateSplitOutputStatus($protoTypeField.val(), true);
                 }
             }
             
@@ -127,10 +157,154 @@
                 });
             }
             
-            // Update preview when the type is changed
-            $("#node-input-protoType").on("change", function() {
-                updateTypePreview($(this).val());
+            // Function to determine the number of outputs based on the message type
+            function determineOutputsCount(typeName) {
+                console.log("determineOutputsCount", typeName);
+                if (!typeName || typeName === "") {
+                    $("#node-input-outputs").val(1);
+                    return;
+                }
+                
+                const protofileId = $("#node-input-protofile").val();
+                if (!protofileId) {
+                    $("#node-input-outputs").val(1);
+                    return;
+                }
+                
+                // Get the protofile node
+                const protofile = RED.nodes.node(protofileId);
+                if (!protofile) {
+                    console.log("Protofile not found:", protofileId);
+                    $("#node-input-outputs").val(1);
+                    return;
+                }
+                
+                try {
+                    console.log("Fetching fields for:", typeName, "from protofile:", protofileId);
+                    // Fetch message type definition to get field count
+                    $.getJSON(`/protobuf-type-fields/${protofileId}/${typeName}`, function(data) {
+                        console.log("Field data received:", data);
+                        if (data && data.fields && Array.isArray(data.fields)) {
+                            // Store field names for output labels
+                            node.fieldNames = data.fields.map(field => field.name);
+                            
+                            // Set outputs to field count or at least 1
+                            const outputCount = data.fields.length > 0 ? data.fields.length : 1;
+                            $("#node-input-outputs").val(outputCount);
+                            console.log("Output count set to:", outputCount);
+                            console.log("Field names:", node.fieldNames);
+                        } else {
+                            $("#node-input-outputs").val(1);
+                            node.fieldNames = [];
+                        }
+                    }).fail(function(err) {
+                        console.error("Error fetching protobuf type fields:", err);
+                        $("#node-input-outputs").val(1);
+                        node.fieldNames = [];
+                    });
+                } catch (error) {
+                    console.error("Error determining outputs:", error);
+                    $("#node-input-outputs").val(1);
+                    node.fieldNames = [];
+                }
+            }
+            
+            // Function to update the split output checkbox status
+            function updateSplitOutputStatus(typeName, isInitializing) {
+                console.log("----------------");
+                console.log("updateSplitOutputStatus", typeName ? typeName : "empty", isInitializing ? "(initializing)" : "");
+                const $splitOutputCheckbox = $("#node-input-splitOutput");
+                const $splitOutputRow = $("#split-output-row");
+                const currentCheckboxState = $splitOutputCheckbox.is(":checked");
+
+                console.log("splitOutputCheckbox", currentCheckboxState);
+                console.log("splitOutputRow", $splitOutputRow.hasClass("node-input-disabled"));
+                
+                if (!typeName || typeName === "") {
+                    // Disable when "Use msg.protobufType" is selected
+                    console.log("disabling");
+                    $splitOutputCheckbox.prop("disabled", true);
+                    if (!isInitializing) {
+                        $splitOutputCheckbox.prop("checked", false);
+                    }
+                    $splitOutputRow.addClass("node-input-disabled");
+                    
+                    // Only set to 1 output if not initializing or if checkbox is unchecked
+                    if (!isInitializing || !currentCheckboxState) {
+                        $("#node-input-outputs").val(1);
+                    }
+                } else {
+                    // Enable when a specific type is selected
+                    console.log("enabling");
+                    $splitOutputCheckbox.prop("disabled", false);
+                    $splitOutputRow.removeClass("node-input-disabled");
+                    
+                    // If initializing with the saved state, preserve the checkbox and update outputs
+                    if (isInitializing && initialSplitOutput) {
+                        $splitOutputCheckbox.prop("checked", true);
+                        if (initialOutputs > 1) {
+                            $("#node-input-outputs").val(initialOutputs);
+                        } else if (currentCheckboxState) {
+                            determineOutputsCount(typeName);
+                        }
+                    } else if (currentCheckboxState) {
+                        // If checkbox is checked, determine the number of outputs
+                        determineOutputsCount(typeName);
+                    } else if (!isInitializing) {
+                        // If not initializing and checkbox is unchecked, set to 1 output
+                        $("#node-input-outputs").val(1);
+                    }
+                }
+                console.log("---------------");
+            }
+            
+            // Handle splitOutput checkbox changes directly
+            $("#node-input-splitOutput").on("click", function() {
+                console.log("Split output clicked, new value:", $(this).is(":checked"));
+                const isSplit = $(this).is(":checked");
+                const typeName = $("#node-input-protoType").val();
+                
+                if (isSplit && typeName && typeName !== "") {
+                    determineOutputsCount(typeName);
+                } else {
+                    $("#node-input-outputs").val(1);
+                    node.fieldNames = [];
+                }
             });
+            
+            // Update preview and split output status when the type is changed
+            $("#node-input-protoType").on("change", function() {
+                const selectedType = $(this).val();
+                console.log("Proto type changed to:", selectedType);
+                updateTypePreview(selectedType);
+                updateSplitOutputStatus(selectedType);
+            });
+            
+            // Initial configuration for split output
+            if (initialSplitOutput) {
+                console.log("Explicitly setting splitOutput checked to true");
+                $("#node-input-splitOutput").prop("checked", true);
+            }
+            
+            // Don't call updateSplitOutputStatus here again - it will be called when dropdown is populated
+        },
+        oneditsave: function() {
+            console.log("oneditsave");
+            // Save the number of outputs
+            const splitOutput = $("#node-input-splitOutput").is(":checked");
+            console.log("splitOutput", splitOutput);
+            const protoType = $("#node-input-protoType").val();
+            console.log("protoType", protoType);
+            
+            if (splitOutput && protoType && protoType !== "") {
+                // We've already calculated the outputs in the oneditprepare/updateSplitOutputStatus functions
+                this.outputs = parseInt($("#node-input-outputs").val()) || 1;
+                console.log("Saving outputs:", this.outputs);
+            } else {
+                this.outputs = 1;
+                this.fieldNames = [];
+                console.log("Default outputs: ", this.outputs);
+            }
         }
     });
 </script>
@@ -170,8 +344,13 @@
         <input type="number" id="node-input-streamTimeout" min="1" placeholder="100">
     </div>
 
-    <!-- Decode Options -->
+    <!-- Output Format -->
     <h4>Output Format</h4>
+    <div class="form-row" id="split-output-row">
+        <label>Split Output</label>
+        <input type="checkbox" id="node-input-splitOutput" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <input type="hidden" id="node-input-outputs">
 
     <!-- Dropdown options -->
     <div class="form-row">
@@ -248,10 +427,11 @@
     <h3>Outputs</h3>
     <dl class="message-properties">
         <dt>payload
-            <span class="property-type">object</span>
+            <span class="property-type">object | value</span>
         </dt>
         <dd>
-            A javascript object containing the protobuf decoded message fields.
+            When "Split Output" is disabled: A javascript object containing the protobuf decoded message fields.<br>
+            When "Split Output" is enabled: Each output will contain the value of the corresponding field in the message.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
@@ -259,7 +439,31 @@
         <dd>
             The identifier string of the corresponding protobuf type definition of the message.
         </dd>
+        <dt class="optional">field
+            <span class="property-type">string</span>
+        </dt>
+        <dd>
+            When "Split Output" is enabled, this contains the name of the field for the current output.
+        </dd>
+        <dt class="optional">fieldType
+            <span class="property-type">string</span>
+        </dt>
+        <dd>
+            When "Split Output" is enabled, this contains the protobuf type of the field for the current output.
+        </dd>
     </dl>
+    
+    <h4>Split Output Mode</h4>
+    <p>When "Split Output" is enabled, each field of the protobuf message will be sent to a separate output. 
+       The outputs are ordered according to the field numbers defined in the protobuf message type.</p>
+    <p>Each output will receive a message containing:</p>
+    <ul>
+        <li><code>msg.payload</code>: The value of the specific field</li>
+        <li><code>msg.field</code>: The name of the field</li>
+        <li><code>msg.fieldType</code>: The data type of the field</li>
+        <li><code>msg.protobufType</code>: The protobuf message type name</li>
+    </ul>
+    <p><strong>Note:</strong> Split Output can only be used when a specific protobuf Type is selected (not with "Use msg.protobufType").</p>
 
     <h3>Details</h3>
     <p>This node decodes protobuf messages into JavaScript objects using a specified message type definition.</p>
@@ -274,6 +478,7 @@
 
     <h4>Output Format Options</h4>
     <ul>
+        <li><b>Split Output</b> - When enabled, each field in the protobuf message will be sent to a separate output. This option is only available when a specific Type is selected.</li>
         <li><b>Enums</b> - Choose whether to output enum values as strings or numbers</li>
         <li><b>Longs</b> - Choose how to represent 64-bit integers (as strings, numbers, or Long objects)</li>
         <li><b>Bytes</b> - Choose how to represent byte fields (as strings, arrays, or buffers)</li>
@@ -290,6 +495,7 @@
 
     <h3>Notes</h3>
     <ul>
+        <li>When using "Split Output", the number of outputs will automatically update based on the selected message type.</li>
         <li>If a message is incomplete, all fields that can be decoded will be included in a partial output message.</li>
         <li>When using stream input without delimited messages, the timeout determines when to process accumulated bytes.</li>
         <li>For serial data or protocols that send one byte at a time, enable stream input and configure an appropriate timeout.</li>

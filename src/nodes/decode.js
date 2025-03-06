@@ -7,6 +7,8 @@ module.exports = function(RED) {
         // Retrieve the config node
         this.protofile = RED.nodes.getNode(config.protofile);
         this.protoType = config.protoType;
+        this.splitOutput = config.splitOutput;
+        this.outputs = config.outputs || 1; // Use the stored outputs value
         var node = this;
 
         // Add stream handling state
@@ -180,7 +182,7 @@ module.exports = function(RED) {
             return { message };
         };
 
-        // Move final message processing to a helper function
+        // Process the decoded message and send it to the appropriate outputs
         let processDecodedMessage = function(messageType, decodedResult, msg) {
             if (decodedResult.error) {
                 if (decodedResult.error === 'incomplete') {
@@ -190,9 +192,38 @@ module.exports = function(RED) {
                 return false;
             }
 
-            msg.payload = messageType.toObject(decodedResult.message, getDecodeOptions());
-            node.status({fill: 'green', shape: 'dot', text: 'Processed'});
-            node.send(msg);
+            const decodedObject = messageType.toObject(decodedResult.message, getDecodeOptions());
+            
+            if (node.splitOutput && messageType && messageType.fieldsArray) {
+                // Split output mode - create a message for each field in the correct order
+                const fields = messageType.fieldsArray;
+                
+                // Sort fields by their field number
+                fields.sort((a, b) => a.id - b.id);
+                
+                // Create an array of null values with the correct length (based on configured outputs)
+                const outputs = new Array(parseInt(node.outputs) || 1).fill(null);
+                
+                // Create a message for each field
+                fields.forEach((field, index) => {
+                    // Only process if within the outputs array bounds
+                    if (index < outputs.length && decodedObject.hasOwnProperty(field.name)) {
+                        const fieldMsg = RED.util.cloneMessage(msg);
+                        fieldMsg.payload = decodedObject[field.name];
+                        fieldMsg.field = field.name;
+                        fieldMsg.fieldType = field.type;
+                        outputs[index] = fieldMsg;
+                    }
+                });
+                
+                node.status({fill: 'green', shape: 'dot', text: 'Split output'});
+                node.send(outputs);
+            } else {
+                // Standard mode - send the full decoded object
+                msg.payload = decodedObject;
+                node.status({fill: 'green', shape: 'dot', text: 'Processed'});
+                node.send(msg);
+            }
             return true;
         };
 
@@ -241,6 +272,56 @@ module.exports = function(RED) {
     }
 
     RED.nodes.registerType('pb_decode', ProtobufDecodeNode);
+    
+    // Add a new API endpoint to fetch the fields of a protobuf type
+    RED.httpAdmin.get('/protobuf-type-fields/:id/:type', function(req, res) {
+        try {
+            const node = RED.nodes.getNode(req.params.id);
+            if (!node) {
+                console.log("Node not found:", req.params.id);
+                return res.status(404).json({ error: "Node not found", fields: [] });
+            }
+            
+            // Access the protoTypes from the node
+            if (!node.protoTypes) {
+                console.log("protoTypes not found in node");
+                // For protobuf_file nodes, the protoTypes should be directly on the node
+                if (node.type === "protobuf_file") {
+                    if (node.protoTypes) {
+                        return lookupType(node.protoTypes);
+                    }
+                }
+                return res.status(404).json({ error: "Proto types not found", fields: [] });
+            }
+            
+            return lookupType(node.protoTypes);
+            
+            function lookupType(protoTypes) {
+                try {
+                    const messageType = protoTypes.lookupType(req.params.type);
+                    if (!messageType || !messageType.fieldsArray) {
+                        return res.json({ fields: [] });
+                    }
+                    
+                    const fields = messageType.fieldsArray.map(field => ({
+                        name: field.name,
+                        type: field.type,
+                        id: field.id
+                    }));
+                    
+                    // Sort fields by their field number
+                    fields.sort((a, b) => a.id - b.id);
+                    return res.json({ fields: fields });
+                } catch (err) {
+                    console.log("Error looking up type:", err.message);
+                    return res.json({ error: err.toString(), fields: [] });
+                }
+            }
+        } catch (err) {
+            console.log("Error in API endpoint:", err.message);
+            res.status(500).json({ error: err.toString(), fields: [] });
+        }
+    });
     
     // Export ProtobufDecodeNode for testing purposes
     module.exports.ProtobufDecodeNode = ProtobufDecodeNode;
