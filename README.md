@@ -93,3 +93,14 @@ The BSD 3-Clause License
 
 ## Contributors
 Forked and enhanced from original project [node-red-contrib-protobuf](https://github.com/w4tsn/node-red-contrib-protobuf) by [Alexander Wellbrock](https://w4tsn.github.io/blog)
+
+## Changelog
+### 2.2.1
+- **Fixed issue with decoding delimited messages that have multi-byte varint length prefixes**
+- Added tests to verify correct handling of both single-byte and multi-byte varint length prefixes
+- Updated minimum Node.js requirement to 12.0.0
+- Updated dependencies:
+  - eslint to 8.31.0
+  - mocha to ^10.0.0
+  - nyc to 15.1.0
+  - protobufjs to ^7.0.0
