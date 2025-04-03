@@ -101,10 +101,11 @@ module.exports = function(RED) {
                     
                     // Check if this is the last length byte (MSB is 0)
                     if ((byte & 0x80) === 0) {
-                        // Reconstruct the length from varint encoding
-                        let length = node.lengthBytes.reduce((acc, byte) => {
-                            return (acc << 7) | (byte & 0x7F);
-                        }, 0);
+                        // Reconstruct the length from varint encoding (little-endian)
+                        let length = 0;
+                        for (let i = 0; i < node.lengthBytes.length; i++) {
+                            length |= (node.lengthBytes[i] & 0x7F) << (i * 7);
+                        }
                         
                         if (length > 0) {
                             node.expectedLength = length;
